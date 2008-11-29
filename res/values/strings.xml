@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, TwitterConfig</string>
-    <string name="app_name">nanoTweeter</string>
+<string name="app_name">nanoTweeter</string>
+<string name="configuration_title"><b>nanoTweeter</b> Settings</string>
+<string name="enable">Start automatically in the background and check for updates every:</string>
+<string name="check_interval">Check for updates every:</string>
+<string name="check_interval_option">1#1 minute| 1&lt;{0} minutes</string>
+<string name="check_interval_battery_warning">(Longer choices use less battery power.)</string>
+<string name="replies">Also check for @replies and direct messages.</string>
+<string name="sound">Make sound</string>
+<string name="vibrate">Vibrate</string>
+<string name="username">Your Twitter account username or e-mail address</string>
+<string name="password">Password</string>
+<string name="save_settings">Apply/save settings</string>
+<string name="reset_settings">Reset to saved settings</string>
 </resources>
