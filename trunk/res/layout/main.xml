@@ -1,12 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-    />
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	>
+<LinearLayout
+	android:orientation="vertical"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	>
+<TextView
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:text="@string/configuration_title"
+	style="?android:listSeparatorTextViewStyle"
+	/>
+<CheckBox android:id="@+id/enable"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/enable"
+	android:checked="true"
+	/>
+<Spinner android:id="@+id/check_interval"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:prompt="@string/check_interval"
+	/>
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/check_interval_battery_warning"
+	/>
+<CheckBox android:id="@+id/replies"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/replies"
+	android:checked="true"
+	/>
+<LinearLayout
+	android:orientation="horizontal"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	>
+<CheckBox android:id="@+id/sound"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/sound"
+	android:checked="false"
+	/>
+<CheckBox android:id="@+id/vibrate"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/vibrate"
+	android:checked="false"
+	/>
 </LinearLayout>
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/username"
+	/>
+<EditText android:id="@+id/username"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:singleLine="true"
+	/>
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/password"
+	/>
+<EditText android:id="@+id/password"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:password="true"
+	android:singleLine="true"
+	/>
+<LinearLayout android:id="@+id/settings_changed"
+	android:orientation="horizontal"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:visibility="gone"
+	>
+<Button android:id="@+id/save"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/save_settings"
+	/>
+<Button android:id="@+id/revert"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/reset_settings"
+	/>
+</LinearLayout>
+</LinearLayout>
+</ScrollView>
