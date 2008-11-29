@@ -4,6 +4,7 @@ import java.text.ChoiceFormat;
 import java.text.MessageFormat;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -20,9 +21,9 @@ import android.widget.Spinner;
 import android.widget.AdapterView.OnItemSelectedListener;
 
 public class TwitterConfig extends Activity {
-	private final int[] INTERVALS = { 1, 3, 5, 10, 15, 30, 60 };
-	private final int DEFAULT_INTERVAL_INDEX = 5;
-	final String PREFS = "prefs";
+	final static int[] INTERVALS = { 1, 3, 5, 10, 15, 30, 60 };
+	final static int DEFAULT_INTERVAL_INDEX = 5;
+	final static String PREFS = "prefs";
 
 	private CheckBox enable;
 	private Spinner interval;
@@ -119,6 +120,10 @@ public class TwitterConfig extends Activity {
 				public void onClick(View v) {
 					uiToPrefs(prefs);
 					settingsChanged();
+					
+					// The service will take care of rescheduling itself
+					// appropriately.
+					startService(new Intent(TwitterConfig.this, Fetcher.class));
 				}
 			});
 		((Button) findViewById(R.id.revert)).setOnClickListener(
