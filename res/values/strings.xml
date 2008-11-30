@@ -13,4 +13,5 @@
 <string name="password">Password</string>
 <string name="save_settings">Apply/save settings</string>
 <string name="reset_settings">Reset to saved settings</string>
+<string name="unauthorized"><!-- This has to be short to fit in the notification. -->Your username or password is wrong.</string>
 </resources>
