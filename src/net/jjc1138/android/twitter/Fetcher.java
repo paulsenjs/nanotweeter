@@ -1,5 +1,7 @@
 package net.jjc1138.android.twitter;
 
+import static org.apache.commons.lang.StringEscapeUtils.unescapeHtml;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,7 +13,6 @@ import java.util.ArrayList;
 
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.http.HttpEntity;
@@ -131,65 +132,24 @@ public class Fetcher extends Service {
 			}
 		}
 	
-		public void fetch() {
-			String username = prefs.getString("username", "");
-			String password = prefs.getString("password", "");
-			if (username.length() == 0 || password.length() == 0) {
-				Log.d(LOG_TAG,
-					"Skipping fetch because we have no credentials.");
-				return;
-			}
-			
-			long last = 1;
-			{
-				BufferedReader br = null;
-				try {
-					br = new BufferedReader(new InputStreamReader(
-						openFileInput(LAST_TWEET_ID_FILENAME), FILE_CHARSET),
-						32);
-					last = Long.parseLong(br.readLine());
-				} catch (IOException e) {
-				} catch (NumberFormatException e) {
-				} finally {
-					if (br != null) {
-						try {
-							br.close();
-						} catch (IOException e) {
-						}
-					}
-				}
-			}
-			
-			DefaultHttpClient client = new DefaultHttpClient();
-			client.getCredentialsProvider().setCredentials(
-				new AuthScope(API_HOST, API_PORT),
-				new UsernamePasswordCredentials(username, password));
-			
-			URI u;
-			try {
-				u = new URI(API_ROOT +
-					"statuses/friends_timeline.xml" + '?' +
-					"since_id=" + last);
-			} catch (URISyntaxException e) {
-				assert false;
-				return;
-			}
+		private class DownloadException extends Exception {
+			private static final long serialVersionUID = 1L;
+		}
+	
+		private HttpEntity download(DefaultHttpClient client, URI uri)
+			throws DownloadException {
 			
 			HttpResponse r = null;
 			try {
-				r = client.execute(new HttpGet(u));
+				r = client.execute(new HttpGet(uri));
 			} catch (ClientProtocolException e) {
 				assert false;
-				return;
+				throw new DownloadException();
 			} catch (IOException e) {
-				Log.e(LOG_TAG, "Failed to get timeline.");
-				return;
+				throw new DownloadException();
 			}
 			
 			int status = r.getStatusLine().getStatusCode();
-			// FIXME remove debug:
-			Log.v(LOG_TAG, Integer.toString(status));
-			
 			HttpEntity ent = r.getEntity();
 			
 			NotificationManager nm =
@@ -209,137 +169,253 @@ public class Fetcher extends Service {
 				nm.notify(ERROR_NOTIFICATION_ID, n);
 				
 				finish(ent);
-				return;
+				throw new DownloadException();
 			} else {
 				nm.cancel(ERROR_NOTIFICATION_ID);
 			}
 			
 			if (status == HttpStatus.SC_OK) {
 				// Coolness.
+				return ent;
 			} else if (status == HttpStatus.SC_NOT_MODIFIED) {
 				// Nothing new.
 				finish(ent);
-				// TODO skip onto replies/direct messages.
-				return;
+				return null;
 			} else {
 				// All other response codes are essentially transient errors.
 				// "403 Forbidden" and "404 Not Found" are exceptions, but there
 				// isn't anything reasonable we can do to recover from them.
 				finish(ent);
+				throw new DownloadException();
+			}
+		}
+	
+		public void fetch() throws DownloadException {
+			String username = prefs.getString("username", "");
+			String password = prefs.getString("password", "");
+			if (username.length() == 0 || password.length() == 0) {
+				Log.d(LOG_TAG,
+					"Skipping fetch because we have no credentials.");
 				return;
 			}
 			
-			if (ent == null) {
-				return;
+			// You might think that lastFriendStatus and lastReply could be
+			// merged into one variable, but that would cause a race because
+			// when we're checking the replies a new friend status could be
+			// posted with an ID less than the newest reply. That status would
+			// then be not be fetched on the next update.
+			long lastFriendStatus = 1;
+			long lastMessage = 1;
+			long lastReply = 1;
+			{
+				BufferedReader br = null;
+				try {
+					br = new BufferedReader(new InputStreamReader(
+						openFileInput(LAST_TWEET_ID_FILENAME), FILE_CHARSET),
+						32);
+					lastFriendStatus = Long.parseLong(br.readLine());
+					lastMessage = Long.parseLong(br.readLine());
+					lastReply = Long.parseLong(br.readLine());
+				} catch (IOException e) {
+				} catch (NumberFormatException e) {
+				} finally {
+					if (br != null) {
+						try {
+							br.close();
+						} catch (IOException e) {
+						}
+					}
+				}
 			}
 			
-			try {
-				XMLReader reader = SAXParserFactory.newInstance()
-					.newSAXParser().getXMLReader();
-				abstract class PathHandler extends DefaultHandler {
-					private ArrayList<String> path =
-						new ArrayList<String>();
-					private ArrayList<StringBuffer> text =
-						new ArrayList<StringBuffer>();
-				
-					protected boolean pathEquals(String[] a) {
-						int size = a.length;
-						if (path.size() != size) {
+			abstract class PathHandler extends DefaultHandler {
+				private ArrayList<String> path =
+					new ArrayList<String>();
+				private ArrayList<StringBuffer> text =
+					new ArrayList<StringBuffer>();
+			
+				protected boolean pathEquals(String[] a) {
+					int size = a.length;
+					if (path.size() != size) {
+						return false;
+					}
+					for (int i = 0; i < size; ++i) {
+						if (!a[i].equals(path.get(i))) {
 							return false;
 						}
-						for (int i = 0; i < size; ++i) {
-							if (!a[i].equals(path.get(i))) {
-								return false;
-							}
+					}
+					return true;
+				}
+			
+				protected String getCurrentText() {
+					int depth = text.size();
+					if (depth == 0) {
+						return "";
+					}
+					return text.get(depth - 1).toString();
+				}
+			
+				@Override
+				public void characters(char[] ch, int start, int length)
+					throws SAXException {
+					
+					int depth = text.size();
+					if (depth == 0) {
+						return;
+					}
+					text.get(depth - 1).append(ch, start, length);
+				}
+			
+				@Override
+				public void startElement(String uri, String localName,
+					String name, Attributes attributes)
+					throws SAXException {
+					
+					path.add(localName);
+					text.add(new StringBuffer(0));
+				}
+			
+				abstract void endElement();
+			
+				@Override
+				public void endElement(String uri, String localName,
+					String name) throws SAXException {
+					
+					endElement();
+					int last = path.size() - 1;
+					path.remove(last);
+					text.remove(last);
+				}
+			}
+			
+			class StatusHandler extends PathHandler {
+				private final String[] statusPath = {
+					"statuses", "status" };
+				private final String[] idPath = {
+					"statuses", "status", "id" };
+				private final String[] textPath = {
+					"statuses", "status", "text" };
+				private final String[] screenNamePath = {
+					"statuses", "status", "user", "screen_name" };
+			
+				private long id = 1;
+				private String text;
+				private String screenName;
+			
+				@Override
+				void endElement() {
+					if (pathEquals(statusPath)) {
+						// FIXME remove debug (privacy):
+						Log.d(LOG_TAG,
+							id + " [" + screenName + "]: " + text);
+					} else if (pathEquals(idPath)) {
+						try {
+							id = Long.parseLong(getCurrentText());
+						} catch (NumberFormatException e) {
 						}
-						return true;
+					} else if (pathEquals(textPath)) {
+						text = unescapeHtml(getCurrentText());
+					} else if (pathEquals(screenNamePath)) {
+						screenName = unescapeHtml(getCurrentText());
 					}
-				
-					protected String getCurrentText() {
-						int depth = text.size();
-						if (depth == 0) {
-							return "";
+				}
+			}
+			
+			class MessageHandler extends PathHandler {
+				private final String[] messagePath = {
+					"direct-messages", "direct_message" };
+				private final String[] idPath = {
+					"direct-messages", "direct_message", "id" };
+				private final String[] textPath = {
+					"direct-messages", "direct_message", "text" };
+				private final String[] screenNamePath = {
+					"direct-messages", "direct_message",
+					"sender", "screen_name" };
+			
+				private long id = 1;
+				private String text;
+				private String screenName;
+			
+				@Override
+				void endElement() {
+					if (pathEquals(messagePath)) {
+						// FIXME remove debug (privacy):
+						Log.d(LOG_TAG,
+							"M" + id + " [" + screenName + "]: " + text);
+					} else if (pathEquals(idPath)) {
+						try {
+							id = Long.parseLong(getCurrentText());
+						} catch (NumberFormatException e) {
 						}
-						return text.get(depth - 1).toString();
+					} else if (pathEquals(textPath)) {
+						text = unescapeHtml(getCurrentText());
+					} else if (pathEquals(screenNamePath)) {
+						screenName = unescapeHtml(getCurrentText());
 					}
-				
-					@Override
-					public void characters(char[] ch, int start, int length)
-						throws SAXException {
-						
-						int depth = text.size();
-						if (depth == 0) {
-							return;
-						}
-						text.get(depth - 1).append(ch, start, length);
-					}
-				
-					@Override
-					public void startElement(String uri, String localName,
-						String name, Attributes attributes)
-						throws SAXException {
-						
-						path.add(localName);
-						text.add(new StringBuffer(0));
-					}
-				
-					abstract void endElement();
-				
-					@Override
-					public void endElement(String uri, String localName,
-						String name) throws SAXException {
-						
-						endElement();
-						int last = path.size() - 1;
-						path.remove(last);
-						text.remove(last);
-					}
-				};
-				reader.setContentHandler(new PathHandler() {
-					private final String[] statusPath = {
-						"statuses", "status" };
-					private final String[] idPath = {
-						"statuses", "status", "id" };
-					private final String[] textPath = {
-						"statuses", "status", "text" };
-					private final String[] screenNamePath = {
-						"statuses", "status", "user", "screen_name" };
-				
-					private long id = 1;
-					private String text;
-					private String screenName;
-				
-					@Override
-					void endElement() {
-						if (pathEquals(statusPath)) {
-							// FIXME remove debug (privacy):
-							Log.d(LOG_TAG,
-								id + " [" + screenName + "]: " + text);
-						} else if (pathEquals(idPath)) {
-							try {
-								id = Long.parseLong(getCurrentText());
-							} catch (NumberFormatException e) {
-							}
-						} else if (pathEquals(textPath)) {
-							text = getCurrentText();
-						} else if (pathEquals(screenNamePath)) {
-							screenName = getCurrentText();
-						}
-					}
-				});
-				InputSource is = new InputSource(ent.getContent());
-				is.setEncoding("UTF-8");
-				reader.parse(is);
+				}
+			}
+			
+			XMLReader reader;
+			try {
+				reader = SAXParserFactory.newInstance()
+					.newSAXParser().getXMLReader();
+			} catch (SAXException e) {
+				assert false;
+				throw new DownloadException();
 			} catch (ParserConfigurationException e) {
 				assert false;
-				return;
+				throw new DownloadException();
 			} catch (FactoryConfigurationError e) {
 				assert false;
-				return;
+				throw new DownloadException();
+			}
+			InputSource is = new InputSource();
+			is.setEncoding("UTF-8");
+			
+			DefaultHttpClient client = new DefaultHttpClient();
+			client.getCredentialsProvider().setCredentials(
+				new AuthScope(API_HOST, API_PORT),
+				new UsernamePasswordCredentials(username, password));
+			
+			HttpEntity ent = null;
+			try {
+				ent = download(client, new URI(API_ROOT +
+					"statuses/friends_timeline.xml" + "?" +
+					"since_id=" + lastFriendStatus));
+				if (ent != null) {
+					reader.setContentHandler(new StatusHandler());
+					is.setByteStream(ent.getContent());
+					reader.parse(is);
+				}
+				
+				ent = download(client, new URI(API_ROOT +
+					"direct_messages.xml" + "?" +
+					"since_id=" + lastMessage));
+				if (ent != null) {
+					reader.setContentHandler(new MessageHandler());
+					is.setByteStream(ent.getContent());
+					reader.parse(is);
+				}
+				
+				if (prefs.getBoolean("replies", false)) {
+					ent = download(client, new URI(API_ROOT +
+						"statuses/replies.xml" + "?" +
+						"since_id=" + lastReply));
+					if (ent != null) {
+						reader.setContentHandler(new StatusHandler());
+						is.setByteStream(ent.getContent());
+						reader.parse(is);
+					}
+				}
 			} catch (SAXException e) {
-				return;
+				throw new DownloadException();
 			} catch (IOException e) {
-				return;
+				throw new DownloadException();
+			} catch (URISyntaxException e) {
+				assert false;
+				throw new DownloadException();
+			} finally {
+				finish(ent);
 			}
 			
 			{
@@ -348,7 +424,10 @@ public class Fetcher extends Service {
 					osw = new OutputStreamWriter(
 						openFileOutput(LAST_TWEET_ID_FILENAME, 0),
 						FILE_CHARSET);
-					osw.write(Long.toString(last));
+					osw.write(
+						Long.toString(lastFriendStatus) + "\n" +
+						Long.toString(lastMessage) + "\n" +
+						Long.toString(lastReply) + "\n");
 				} catch (IOException e) {
 					// This is a fairly big problem, because we'll keep
 					// notifying the user about the same tweets, but I don't
@@ -369,15 +448,21 @@ public class Fetcher extends Service {
 	
 		@Override
 		public void run() {
-			fetch();
-			
-			inProgress = false;
-			handler.post(new Runnable() {
-				@Override
-				public void run() {
-					stopIfIdle();
-				}
-			});
+			try {
+				fetch();
+			} catch (DownloadException e) {
+				Log.v(LOG_TAG, "A download failed.");
+			} finally {
+				// This is in a finally because if stopIfIdle() isn't called
+				// then the wake lock would be held forever. That would suck.
+				inProgress = false;
+				handler.post(new Runnable() {
+					@Override
+					public void run() {
+						stopIfIdle();
+					}
+				});
+			}
 		}
 	}
 
