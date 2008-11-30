@@ -21,8 +21,8 @@ import android.widget.Spinner;
 import android.widget.AdapterView.OnItemSelectedListener;
 
 public class TwitterConfig extends Activity {
-	final static int[] INTERVALS = { 1, 3, 5, 10, 15, 30, 60 };
-	final static int DEFAULT_INTERVAL_INDEX = 5;
+	final static int[] INTERVALS = { 3, 5, 10, 15, 30, 60 };
+	final static int DEFAULT_INTERVAL_INDEX = 4;
 	final static String PREFS = "prefs";
 
 	private CheckBox enable;
