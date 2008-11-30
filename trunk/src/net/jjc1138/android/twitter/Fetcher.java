@@ -7,7 +7,14 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
@@ -15,6 +22,11 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -110,6 +122,15 @@ public class Fetcher extends Service {
 			return inProgress;
 		}
 	
+		private void finish(HttpEntity ent) {
+			if (ent != null) {
+				try {
+					ent.consumeContent();
+				} catch (IOException e) {
+				}
+			}
+		}
+	
 		public void fetch() {
 			String username = prefs.getString("username", "");
 			String password = prefs.getString("password", "");
@@ -119,14 +140,14 @@ public class Fetcher extends Service {
 				return;
 			}
 			
-			int last = 1;
+			long last = 1;
 			{
 				BufferedReader br = null;
 				try {
 					br = new BufferedReader(new InputStreamReader(
 						openFileInput(LAST_TWEET_ID_FILENAME), FILE_CHARSET),
 						32);
-					last = Integer.parseInt(br.readLine());
+					last = Long.parseLong(br.readLine());
 				} catch (IOException e) {
 				} catch (NumberFormatException e) {
 				} finally {
@@ -169,6 +190,8 @@ public class Fetcher extends Service {
 			// FIXME remove debug:
 			Log.v(LOG_TAG, Integer.toString(status));
 			
+			HttpEntity ent = r.getEntity();
+			
 			NotificationManager nm =
 				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			
@@ -185,6 +208,7 @@ public class Fetcher extends Service {
 				n.flags |= Notification.FLAG_AUTO_CANCEL;
 				nm.notify(ERROR_NOTIFICATION_ID, n);
 				
+				finish(ent);
 				return;
 			} else {
 				nm.cancel(ERROR_NOTIFICATION_ID);
@@ -194,12 +218,127 @@ public class Fetcher extends Service {
 				// Coolness.
 			} else if (status == HttpStatus.SC_NOT_MODIFIED) {
 				// Nothing new.
+				finish(ent);
 				// TODO skip onto replies/direct messages.
 				return;
 			} else {
 				// All other response codes are essentially transient errors.
 				// "403 Forbidden" and "404 Not Found" are exceptions, but there
 				// isn't anything reasonable we can do to recover from them.
+				finish(ent);
+				return;
+			}
+			
+			if (ent == null) {
+				return;
+			}
+			
+			try {
+				XMLReader reader = SAXParserFactory.newInstance()
+					.newSAXParser().getXMLReader();
+				abstract class PathHandler extends DefaultHandler {
+					private ArrayList<String> path =
+						new ArrayList<String>();
+					private ArrayList<StringBuffer> text =
+						new ArrayList<StringBuffer>();
+				
+					protected boolean pathEquals(String[] a) {
+						int size = a.length;
+						if (path.size() != size) {
+							return false;
+						}
+						for (int i = 0; i < size; ++i) {
+							if (!a[i].equals(path.get(i))) {
+								return false;
+							}
+						}
+						return true;
+					}
+				
+					protected String getCurrentText() {
+						int depth = text.size();
+						if (depth == 0) {
+							return "";
+						}
+						return text.get(depth - 1).toString();
+					}
+				
+					@Override
+					public void characters(char[] ch, int start, int length)
+						throws SAXException {
+						
+						int depth = text.size();
+						if (depth == 0) {
+							return;
+						}
+						text.get(depth - 1).append(ch, start, length);
+					}
+				
+					@Override
+					public void startElement(String uri, String localName,
+						String name, Attributes attributes)
+						throws SAXException {
+						
+						path.add(localName);
+						text.add(new StringBuffer(0));
+					}
+				
+					abstract void endElement();
+				
+					@Override
+					public void endElement(String uri, String localName,
+						String name) throws SAXException {
+						
+						endElement();
+						int last = path.size() - 1;
+						path.remove(last);
+						text.remove(last);
+					}
+				};
+				reader.setContentHandler(new PathHandler() {
+					private final String[] statusPath = {
+						"statuses", "status" };
+					private final String[] idPath = {
+						"statuses", "status", "id" };
+					private final String[] textPath = {
+						"statuses", "status", "text" };
+					private final String[] screenNamePath = {
+						"statuses", "status", "user", "screen_name" };
+				
+					private long id = 1;
+					private String text;
+					private String screenName;
+				
+					@Override
+					void endElement() {
+						if (pathEquals(statusPath)) {
+							// FIXME remove debug (privacy):
+							Log.d(LOG_TAG,
+								id + " [" + screenName + "]: " + text);
+						} else if (pathEquals(idPath)) {
+							try {
+								id = Long.parseLong(getCurrentText());
+							} catch (NumberFormatException e) {
+							}
+						} else if (pathEquals(textPath)) {
+							text = getCurrentText();
+						} else if (pathEquals(screenNamePath)) {
+							screenName = getCurrentText();
+						}
+					}
+				});
+				InputSource is = new InputSource(ent.getContent());
+				is.setEncoding("UTF-8");
+				reader.parse(is);
+			} catch (ParserConfigurationException e) {
+				assert false;
+				return;
+			} catch (FactoryConfigurationError e) {
+				assert false;
+				return;
+			} catch (SAXException e) {
+				return;
+			} catch (IOException e) {
 				return;
 			}
 			
@@ -209,7 +348,7 @@ public class Fetcher extends Service {
 					osw = new OutputStreamWriter(
 						openFileOutput(LAST_TWEET_ID_FILENAME, 0),
 						FILE_CHARSET);
-					osw.write(Integer.toString(last));
+					osw.write(Long.toString(last));
 				} catch (IOException e) {
 					// This is a fairly big problem, because we'll keep
 					// notifying the user about the same tweets, but I don't
