@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
@@ -190,6 +191,15 @@ public class Fetcher extends Service {
 			}
 		}
 	
+		// You might think that lastFriendStatus and lastReply could be merged
+		// into one variable, but that would cause a race because when we're
+		// checking the replies a new friend status could be posted with an ID
+		// less than the newest reply. That status would then not be fetched on
+		// the next update.
+		long lastFriendStatus = 1;
+		long lastMessage = 1;
+		long lastReply = 1;
+	
 		public void fetch() throws DownloadException {
 			String username = prefs.getString("username", "");
 			String password = prefs.getString("password", "");
@@ -199,14 +209,6 @@ public class Fetcher extends Service {
 				return;
 			}
 			
-			// You might think that lastFriendStatus and lastReply could be
-			// merged into one variable, but that would cause a race because
-			// when we're checking the replies a new friend status could be
-			// posted with an ID less than the newest reply. That status would
-			// then be not be fetched on the next update.
-			long lastFriendStatus = 1;
-			long lastMessage = 1;
-			long lastReply = 1;
 			{
 				BufferedReader br = null;
 				try {
@@ -288,7 +290,46 @@ public class Fetcher extends Service {
 				}
 			}
 			
-			class StatusHandler extends PathHandler {
+			abstract class Tweet {
+				public Tweet(String screenName, String text) {
+					this.screenName = screenName;
+					this.text = text;
+				}
+			
+				public String getScreenName() {
+					return screenName;
+				}
+				public String getText() {
+					return text;
+				}
+			
+				abstract public String toString();
+			
+				private String screenName;
+				private String text;
+			}
+			
+			class Status extends Tweet {
+				public Status(String screenName, String text) {
+					super(screenName, text);
+				}
+			
+				public String toString() {
+					return "[" + getScreenName() + "]: " + getText();
+				}
+			}
+			class Message extends Tweet {
+				public Message(String screenName, String text) {
+					super(screenName, text);
+				}
+			
+				public String toString() {
+					return "M[" + getScreenName() + "]: " + getText();
+				}
+			}
+			
+			final LinkedList<Tweet> tweets = new LinkedList<Tweet>();
+			abstract class StatusHandler extends PathHandler {
 				private final String[] statusPath = {
 					"statuses", "status" };
 				private final String[] idPath = {
@@ -298,19 +339,21 @@ public class Fetcher extends Service {
 				private final String[] screenNamePath = {
 					"statuses", "status", "user", "screen_name" };
 			
-				private long id = 1;
 				private String text;
 				private String screenName;
+			
+				abstract void updateLast(long id);
 			
 				@Override
 				void endElement() {
 					if (pathEquals(statusPath)) {
+						Status s = new Status(screenName, text);
+						tweets.addFirst(s);
 						// FIXME remove debug (privacy):
-						Log.d(LOG_TAG,
-							id + " [" + screenName + "]: " + text);
+						Log.v(LOG_TAG, s.toString());
 					} else if (pathEquals(idPath)) {
 						try {
-							id = Long.parseLong(getCurrentText());
+							updateLast(Long.parseLong(getCurrentText()));
 						} catch (NumberFormatException e) {
 						}
 					} else if (pathEquals(textPath)) {
@@ -321,6 +364,18 @@ public class Fetcher extends Service {
 				}
 			}
 			
+			class FriendStatusHandler extends StatusHandler {
+				@Override
+				void updateLast(long id) {
+					lastFriendStatus = Math.max(lastFriendStatus, id);
+				}
+			}
+			class ReplyHandler extends StatusHandler {
+				@Override
+				void updateLast(long id) {
+					lastReply = Math.max(lastReply, id);
+				}
+			}
 			class MessageHandler extends PathHandler {
 				private final String[] messagePath = {
 					"direct-messages", "direct_message" };
@@ -332,21 +387,23 @@ public class Fetcher extends Service {
 					"direct-messages", "direct_message",
 					"sender", "screen_name" };
 			
-				private long id = 1;
 				private String text;
 				private String screenName;
 			
 				@Override
 				void endElement() {
 					if (pathEquals(messagePath)) {
+						Message m = new Message(screenName, text);
+						tweets.addFirst(m);
 						// FIXME remove debug (privacy):
-						Log.d(LOG_TAG,
-							"M" + id + " [" + screenName + "]: " + text);
+						Log.v(LOG_TAG, m.toString());
 					} else if (pathEquals(idPath)) {
+						long id = 1;
 						try {
 							id = Long.parseLong(getCurrentText());
 						} catch (NumberFormatException e) {
 						}
+						lastMessage = Math.max(lastMessage, id);
 					} else if (pathEquals(textPath)) {
 						text = unescapeHtml(getCurrentText());
 					} else if (pathEquals(screenNamePath)) {
@@ -383,7 +440,7 @@ public class Fetcher extends Service {
 					"statuses/friends_timeline.xml" + "?" +
 					"since_id=" + lastFriendStatus));
 				if (ent != null) {
-					reader.setContentHandler(new StatusHandler());
+					reader.setContentHandler(new FriendStatusHandler());
 					is.setByteStream(ent.getContent());
 					reader.parse(is);
 				}
@@ -402,7 +459,7 @@ public class Fetcher extends Service {
 						"statuses/replies.xml" + "?" +
 						"since_id=" + lastReply));
 					if (ent != null) {
-						reader.setContentHandler(new StatusHandler());
+						reader.setContentHandler(new ReplyHandler());
 						is.setByteStream(ent.getContent());
 						reader.parse(is);
 					}
