@@ -9,9 +9,13 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedList;
 
 import javax.xml.parsers.FactoryConfigurationError;
@@ -294,14 +298,20 @@ public class Fetcher extends Service {
 			}
 			
 			abstract class Tweet {
-				public Tweet(long id, String screenName, String text) {
+				public Tweet(
+					long id, Date date, String screenName, String text) {
+					
 					this.id = id;
+					this.date = date;
 					this.screenName = screenName;
 					this.text = text;
 				}
 			
 				public long getID() {
 					return id;
+				}
+				public Date getDate() {
+					return date;
 				}
 				public String getScreenName() {
 					return screenName;
@@ -313,13 +323,16 @@ public class Fetcher extends Service {
 				abstract public String toString();
 			
 				private long id;
+				private Date date;
 				private String screenName;
 				private String text;
 			}
 			
 			class Status extends Tweet {
-				public Status(long id, String screenName, String text) {
-					super(id, screenName, text);
+				public Status(
+					long id, Date date, String screenName, String text) {
+					
+					super(id, date, screenName, text);
 				}
 			
 				public String toString() {
@@ -327,8 +340,10 @@ public class Fetcher extends Service {
 				}
 			}
 			class Message extends Tweet {
-				public Message(long id, String screenName, String text) {
-					super(id, screenName, text);
+				public Message(
+					long id, Date date, String screenName, String text) {
+					
+					super(id, date, screenName, text);
 				}
 			
 				public String toString() {
@@ -336,10 +351,14 @@ public class Fetcher extends Service {
 				}
 			}
 			
+			final DateFormat twitterDateFormat = new SimpleDateFormat(
+				"E MMM dd HH:mm:ss Z yyyy");
 			final LinkedList<Tweet> tweets = new LinkedList<Tweet>();
 			abstract class StatusHandler extends PathHandler {
 				private final String[] statusPath = {
 					"statuses", "status" };
+				private final String[] createdAtPath = {
+					"statuses", "status", "created_at" };
 				private final String[] idPath = {
 					"statuses", "status", "id" };
 				private final String[] textPath = {
@@ -347,6 +366,7 @@ public class Fetcher extends Service {
 				private final String[] screenNamePath = {
 					"statuses", "status", "user", "screen_name" };
 			
+				private Date createdAt;
 				private long id;
 				private String text;
 				private String screenName;
@@ -356,10 +376,17 @@ public class Fetcher extends Service {
 				@Override
 				void endElement() {
 					if (pathEquals(statusPath)) {
-						Status s = new Status(id, screenName, text);
+						Status s = new Status(id, createdAt, screenName, text);
 						tweets.addFirst(s);
 						// FIXME remove debug (privacy):
 						Log.v(LOG_TAG, s.toString());
+					} else if (pathEquals(createdAtPath)) {
+						try {
+							createdAt = twitterDateFormat.parse(
+								unescapeHtml(getCurrentText()));
+						} catch (ParseException e) {
+							createdAt = new Date(System.currentTimeMillis());
+						}
 					} else if (pathEquals(idPath)) {
 						try {
 							id = Long.parseLong(getCurrentText());
@@ -387,10 +414,11 @@ public class Fetcher extends Service {
 				}
 			}
 			
-			final LinkedList<Message> messages = new LinkedList<Message>();
 			class MessageHandler extends PathHandler {
 				private final String[] messagePath = {
 					"direct-messages", "direct_message" };
+				private final String[] createdAtPath = {
+					"direct-messages", "direct_message", "created_at" };
 				private final String[] idPath = {
 					"direct-messages", "direct_message", "id" };
 				private final String[] textPath = {
@@ -399,6 +427,7 @@ public class Fetcher extends Service {
 					"direct-messages", "direct_message",
 					"sender", "screen_name" };
 			
+				private Date createdAt;
 				private long id;
 				private String text;
 				private String screenName;
@@ -406,10 +435,18 @@ public class Fetcher extends Service {
 				@Override
 				void endElement() {
 					if (pathEquals(messagePath)) {
-						Message m = new Message(id, screenName, text);
-						messages.addFirst(m);
+						Message m = new Message(
+							id, createdAt, screenName, text);
+						tweets.addFirst(m);
 						// FIXME remove debug (privacy):
 						Log.v(LOG_TAG, m.toString());
+					} else if (pathEquals(createdAtPath)) {
+						try {
+							createdAt = twitterDateFormat.parse(
+								unescapeHtml(getCurrentText()));
+						} catch (ParseException e) {
+							createdAt = new Date(System.currentTimeMillis());
+						}
 					} else if (pathEquals(idPath)) {
 						try {
 							id = Long.parseLong(getCurrentText());
@@ -490,19 +527,9 @@ public class Fetcher extends Service {
 			Collections.sort(tweets, new Comparator<Tweet>() {
 				@Override
 				public int compare(Tweet t1, Tweet t2) {
-					long l = t1.getID() - t2.getID();
-					if (l < 0) {
-						return -1;
-					} else if (l > 0) {
-						return 1;
-					} else {
-						return 0;
-					}
+					return t1.getDate().compareTo(t2.getDate());
 				}
 			});
-			for (Message m : messages) {
-				tweets.add(m);
-			}
 			
 			final Uri twitterHome = Uri.parse("http://m.twitter.com/home");
 			NotificationManager nm =
@@ -520,6 +547,7 @@ public class Fetcher extends Service {
 					t.getScreenName(),
 					t.getText(),
 					PendingIntent.getActivity(Fetcher.this, 0, i, 0));
+				n.when = t.getDate().getTime();
 				n.defaults =
 					(sound ? Notification.DEFAULT_SOUND : 0) |
 					(vibrate ? Notification.DEFAULT_VIBRATE : 0) |
