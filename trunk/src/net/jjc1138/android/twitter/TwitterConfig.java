@@ -30,6 +30,7 @@ public class TwitterConfig extends Activity {
 	private CheckBox replies;
 	private CheckBox sound;
 	private CheckBox vibrate;
+	private CheckBox lights;
 	private EditText username;
 	private EditText password;
 
@@ -48,6 +49,7 @@ public class TwitterConfig extends Activity {
 		replies = (CheckBox) findViewById(R.id.replies);
 		sound = (CheckBox) findViewById(R.id.sound);
 		vibrate = (CheckBox) findViewById(R.id.vibrate);
+		lights = (CheckBox) findViewById(R.id.lights);
 		username = (EditText) findViewById(R.id.username);
 		password = (EditText) findViewById(R.id.password);
 		
@@ -110,6 +112,7 @@ public class TwitterConfig extends Activity {
 		replies.setOnCheckedChangeListener(checkWatcher);
 		sound.setOnCheckedChangeListener(checkWatcher);
 		vibrate.setOnCheckedChangeListener(checkWatcher);
+		lights.setOnCheckedChangeListener(checkWatcher);
 		username.addTextChangedListener(textWatcher);
 		password.addTextChangedListener(textWatcher);
 		
@@ -176,6 +179,7 @@ public class TwitterConfig extends Activity {
 		e.putBoolean("replies", replies.isChecked());
 		e.putBoolean("sound", sound.isChecked());
 		e.putBoolean("vibrate", vibrate.isChecked());
+		e.putBoolean("lights", lights.isChecked());
 		e.putString("username", username.getText().toString());
 		e.putString("password", password.getText().toString());
 		e.commit();
@@ -197,6 +201,7 @@ public class TwitterConfig extends Activity {
 		replies.setChecked(p.getBoolean("replies", true));
 		sound.setChecked(p.getBoolean("sound", false));
 		vibrate.setChecked(p.getBoolean("vibrate", false));
+		lights.setChecked(p.getBoolean("lights", false));
 		username.setText(p.getString("username", ""));
 		password.setText(p.getString("password", ""));
 	}
@@ -209,6 +214,7 @@ public class TwitterConfig extends Activity {
 			replies.isChecked() == p.getBoolean("replies", true) &&
 			sound.isChecked() == p.getBoolean("sound", false) &&
 			vibrate.isChecked() == p.getBoolean("vibrate", false) &&
+			lights.isChecked() == p.getBoolean("lights", false) &&
 			username.getText().toString().equals(p.getString("username", "")) &&
 			password.getText().toString().equals(p.getString("password", ""));
 	}

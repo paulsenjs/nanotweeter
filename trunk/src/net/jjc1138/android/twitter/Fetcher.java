@@ -536,8 +536,7 @@ public class Fetcher extends Service {
 				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			final boolean sound = prefs.getBoolean("sound", false);
 			final boolean vibrate = prefs.getBoolean("vibrate", false);
-			// TODO add light option:
-			final boolean lights = true;
+			final boolean lights = prefs.getBoolean("lights", false);
 			for (Tweet t : tweets) {
 				Notification n = new Notification();
 				n.icon = R.drawable.icon; // TODO proper notification icon

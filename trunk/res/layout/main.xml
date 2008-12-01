@@ -36,6 +36,11 @@
 	android:text="@string/replies"
 	android:checked="true"
 	/>
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/notification_options"
+	/>
 <LinearLayout
 	android:orientation="horizontal"
 	android:layout_width="wrap_content"
@@ -51,6 +56,12 @@
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="@string/vibrate"
+	android:checked="false"
+	/>
+<CheckBox android:id="@+id/lights"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/lights"
 	android:checked="false"
 	/>
 </LinearLayout>
