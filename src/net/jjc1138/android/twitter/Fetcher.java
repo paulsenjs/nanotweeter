@@ -10,6 +10,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 import javax.xml.parsers.FactoryConfigurationError;
@@ -37,6 +39,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -291,11 +294,15 @@ public class Fetcher extends Service {
 			}
 			
 			abstract class Tweet {
-				public Tweet(String screenName, String text) {
+				public Tweet(long id, String screenName, String text) {
+					this.id = id;
 					this.screenName = screenName;
 					this.text = text;
 				}
 			
+				public long getID() {
+					return id;
+				}
 				public String getScreenName() {
 					return screenName;
 				}
@@ -305,13 +312,14 @@ public class Fetcher extends Service {
 			
 				abstract public String toString();
 			
+				private long id;
 				private String screenName;
 				private String text;
 			}
 			
 			class Status extends Tweet {
-				public Status(String screenName, String text) {
-					super(screenName, text);
+				public Status(long id, String screenName, String text) {
+					super(id, screenName, text);
 				}
 			
 				public String toString() {
@@ -319,8 +327,8 @@ public class Fetcher extends Service {
 				}
 			}
 			class Message extends Tweet {
-				public Message(String screenName, String text) {
-					super(screenName, text);
+				public Message(long id, String screenName, String text) {
+					super(id, screenName, text);
 				}
 			
 				public String toString() {
@@ -339,6 +347,7 @@ public class Fetcher extends Service {
 				private final String[] screenNamePath = {
 					"statuses", "status", "user", "screen_name" };
 			
+				private long id;
 				private String text;
 				private String screenName;
 			
@@ -347,15 +356,16 @@ public class Fetcher extends Service {
 				@Override
 				void endElement() {
 					if (pathEquals(statusPath)) {
-						Status s = new Status(screenName, text);
+						Status s = new Status(id, screenName, text);
 						tweets.addFirst(s);
 						// FIXME remove debug (privacy):
 						Log.v(LOG_TAG, s.toString());
 					} else if (pathEquals(idPath)) {
 						try {
-							updateLast(Long.parseLong(getCurrentText()));
+							id = Long.parseLong(getCurrentText());
 						} catch (NumberFormatException e) {
 						}
+						updateLast(id);
 					} else if (pathEquals(textPath)) {
 						text = unescapeHtml(getCurrentText());
 					} else if (pathEquals(screenNamePath)) {
@@ -376,6 +386,8 @@ public class Fetcher extends Service {
 					lastReply = Math.max(lastReply, id);
 				}
 			}
+			
+			final LinkedList<Message> messages = new LinkedList<Message>();
 			class MessageHandler extends PathHandler {
 				private final String[] messagePath = {
 					"direct-messages", "direct_message" };
@@ -387,18 +399,18 @@ public class Fetcher extends Service {
 					"direct-messages", "direct_message",
 					"sender", "screen_name" };
 			
+				private long id;
 				private String text;
 				private String screenName;
 			
 				@Override
 				void endElement() {
 					if (pathEquals(messagePath)) {
-						Message m = new Message(screenName, text);
-						tweets.addFirst(m);
+						Message m = new Message(id, screenName, text);
+						messages.addFirst(m);
 						// FIXME remove debug (privacy):
 						Log.v(LOG_TAG, m.toString());
 					} else if (pathEquals(idPath)) {
-						long id = 1;
 						try {
 							id = Long.parseLong(getCurrentText());
 						} catch (NumberFormatException e) {
@@ -473,6 +485,48 @@ public class Fetcher extends Service {
 				throw new DownloadException();
 			} finally {
 				finish(ent);
+			}
+			
+			Collections.sort(tweets, new Comparator<Tweet>() {
+				@Override
+				public int compare(Tweet t1, Tweet t2) {
+					long l = t1.getID() - t2.getID();
+					if (l < 0) {
+						return -1;
+					} else if (l > 0) {
+						return 1;
+					} else {
+						return 0;
+					}
+				}
+			});
+			for (Message m : messages) {
+				tweets.add(m);
+			}
+			
+			final Uri twitterHome = Uri.parse("http://m.twitter.com/home");
+			NotificationManager nm =
+				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+			final boolean sound = prefs.getBoolean("sound", false);
+			final boolean vibrate = prefs.getBoolean("vibrate", false);
+			// TODO add light option:
+			final boolean lights = true;
+			for (Tweet t : tweets) {
+				Notification n = new Notification();
+				n.icon = R.drawable.icon; // TODO proper notification icon
+				Intent i = new Intent(Intent.ACTION_VIEW, twitterHome);
+				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				n.setLatestEventInfo(Fetcher.this,
+					t.getScreenName(),
+					t.getText(),
+					PendingIntent.getActivity(Fetcher.this, 0, i, 0));
+				n.defaults =
+					(sound ? Notification.DEFAULT_SOUND : 0) |
+					(vibrate ? Notification.DEFAULT_VIBRATE : 0) |
+					(lights ? Notification.DEFAULT_LIGHTS : 0);
+				n.flags |= Notification.FLAG_AUTO_CANCEL;
+				
+				nm.notify((int) (t.getID() % Integer.MAX_VALUE), n);
 			}
 			
 			{
