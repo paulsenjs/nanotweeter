@@ -208,8 +208,8 @@ public class Fetcher extends Service {
 		long lastReply = 1;
 	
 		public void fetch() throws DownloadException {
-			String username = prefs.getString("username", "");
-			String password = prefs.getString("password", "");
+			final String username = prefs.getString("username", "");
+			final String password = prefs.getString("password", "");
 			if (username.length() == 0 || password.length() == 0) {
 				Log.d(LOG_TAG,
 					"Skipping fetch because we have no credentials.");
@@ -376,10 +376,13 @@ public class Fetcher extends Service {
 				@Override
 				void endElement() {
 					if (pathEquals(statusPath)) {
-						Status s = new Status(id, createdAt, screenName, text);
-						tweets.addFirst(s);
-						// FIXME remove debug (privacy):
-						Log.v(LOG_TAG, s.toString());
+						if (!screenName.equals(username)) {
+							Status s = new Status(
+								id, createdAt, screenName, text);
+							tweets.addFirst(s);
+							// FIXME remove debug (privacy):
+							Log.v(LOG_TAG, s.toString());
+						}
 					} else if (pathEquals(createdAtPath)) {
 						try {
 							createdAt = twitterDateFormat.parse(
