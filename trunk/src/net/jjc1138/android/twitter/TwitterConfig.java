@@ -121,6 +121,11 @@ public class TwitterConfig extends Activity {
 			new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
+					if (!prefs.getString("username", "").equals(
+						username.getText().toString())) {
+						
+						deleteFile(Fetcher.LAST_TWEET_ID_FILENAME);
+					}
 					uiToPrefs(prefs);
 					settingsChanged();
 					
