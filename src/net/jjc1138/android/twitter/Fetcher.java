@@ -53,6 +53,8 @@ import android.util.Log;
 public class Fetcher extends Service {
 	final static String LOG_TAG = "nanoTweeter";
 
+	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
+
 	private SharedPreferences prefs;
 
 	private FetcherThread fetcherThread;
@@ -109,7 +111,6 @@ public class Fetcher extends Service {
 	}
 
 	private class FetcherThread extends Thread {
-		private static final String LAST_TWEET_ID_FILENAME = "lasttweet";
 		private final Charset FILE_CHARSET = Charset.forName("US-ASCII");
 		private static final int ERROR_NOTIFICATION_ID = 0;
 	
@@ -117,6 +118,11 @@ public class Fetcher extends Service {
 		private static final int API_PORT = 443;
 		private static final String API_ROOT =
 			"https://" + API_HOST + ":" + API_PORT + "/";
+	
+		private static final int FIRST_RUN_NOTIFICATIONS = 3;
+		// This should be 200, but that causes memory exhaustion that crashes
+		// the phone:
+		private static final int MAX_NOTIFICATIONS = 100;
 	
 		// stopIfIdle() below needs to know if this thread is still doing work.
 		// You might think that we could use Thread.isAlive() to find that out,
@@ -486,11 +492,15 @@ public class Fetcher extends Service {
 				new AuthScope(API_HOST, API_PORT),
 				new UsernamePasswordCredentials(username, password));
 			
+			final boolean firstRun = (lastFriendStatus == 1);
+			
 			HttpEntity ent = null;
 			try {
 				ent = download(client, new URI(API_ROOT +
 					"statuses/friends_timeline.xml" + "?" +
-					"since_id=" + lastFriendStatus));
+					(firstRun ? "" : ("since_id=" + lastFriendStatus + "&")) +
+					"count=" + (firstRun ?
+						FIRST_RUN_NOTIFICATIONS : MAX_NOTIFICATIONS)));
 				if (ent != null) {
 					reader.setContentHandler(new FriendStatusHandler());
 					is.setByteStream(ent.getContent());
@@ -533,6 +543,12 @@ public class Fetcher extends Service {
 					return t1.getDate().compareTo(t2.getDate());
 				}
 			});
+			
+			final int limit =
+				firstRun ? FIRST_RUN_NOTIFICATIONS : MAX_NOTIFICATIONS;
+			for (int nTweets = tweets.size(); nTweets > limit; --nTweets) {
+				tweets.removeFirst();
+			}
 			
 			final Uri twitterHome = Uri.parse("http://m.twitter.com/home");
 			NotificationManager nm =
