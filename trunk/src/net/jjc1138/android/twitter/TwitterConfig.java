@@ -6,9 +6,12 @@ import java.text.MessageFormat;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Spannable;
 import android.text.TextWatcher;
+import android.text.style.UnderlineSpan;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,6 +21,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.AdapterView.OnItemSelectedListener;
 
 public class TwitterConfig extends Activity {
@@ -151,6 +155,18 @@ public class TwitterConfig extends Activity {
 					settingsChanged();
 				}
 			});
+		
+		// The follow link:
+		TextView follow_link = (TextView) findViewById(R.id.follow_link);
+		Spannable text = (Spannable) follow_link.getText();
+		text.setSpan(new UnderlineSpan(), 0, text.length(), 0);
+		follow_link.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startActivity((new Intent(Intent.ACTION_VIEW,
+					Uri.parse("http://m.twitter.com/nanoTweeter"))));
+			}
+		});
 	}
 
 	@Override

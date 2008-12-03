@@ -14,6 +14,14 @@
 	android:text="@string/configuration_title"
 	style="?android:listSeparatorTextViewStyle"
 	/>
+<TextView android:id="@+id/follow_link"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:paddingTop="4sp"
+	android:paddingBottom="4sp"
+	android:text="@string/follow_link"
+	style="@style/webLink"
+	/>
 <TextView
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
