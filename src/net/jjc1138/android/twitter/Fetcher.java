@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -49,6 +50,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 public class Fetcher extends Service {
 	final static String LOG_TAG = "nanoTweeter";
@@ -120,8 +122,8 @@ public class Fetcher extends Service {
 			"https://" + API_HOST + ":" + API_PORT + "/";
 	
 		private static final int FIRST_RUN_NOTIFICATIONS = 3;
-		// This should be 200, but that causes memory exhaustion that crashes
-		// the phone:
+		// This should be 200, but firing so many notifications causes a memory
+		// exhaustion that crashes the phone:
 		private static final int MAX_NOTIFICATIONS = 100;
 	
 		// stopIfIdle() below needs to know if this thread is still doing work.
@@ -202,6 +204,10 @@ public class Fetcher extends Service {
 				finish(ent);
 				throw new DownloadException();
 			}
+		}
+	
+		private String newLinesToSpaces(String s) {
+			return s.replace('\n', ' ');
 		}
 	
 		// You might think that lastFriendStatus and lastReply could be merged
@@ -403,7 +409,7 @@ public class Fetcher extends Service {
 						}
 						updateLast(id);
 					} else if (pathEquals(textPath)) {
-						text = unescapeHtml(getCurrentText());
+						text = newLinesToSpaces(unescapeHtml(getCurrentText()));
 					} else if (pathEquals(screenNamePath)) {
 						screenName = unescapeHtml(getCurrentText());
 					}
@@ -463,7 +469,7 @@ public class Fetcher extends Service {
 						}
 						lastMessage = Math.max(lastMessage, id);
 					} else if (pathEquals(textPath)) {
-						text = unescapeHtml(getCurrentText());
+						text = newLinesToSpaces(unescapeHtml(getCurrentText()));
 					} else if (pathEquals(screenNamePath)) {
 						screenName = unescapeHtml(getCurrentText());
 					}
@@ -550,22 +556,34 @@ public class Fetcher extends Service {
 				tweets.removeFirst();
 			}
 			
-			final Uri twitterHome = Uri.parse("http://m.twitter.com/home");
-			NotificationManager nm =
+			final String twitterRoot = "http://m.twitter.com/";
+			final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
+			final NotificationManager nm =
 				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			final boolean sound = prefs.getBoolean("sound", false);
 			final boolean vibrate = prefs.getBoolean("vibrate", false);
 			final boolean lights = prefs.getBoolean("lights", false);
-			for (Tweet t : tweets) {
-				Notification n = new Notification();
+			for (final Tweet t : tweets) {
+				final Notification n = new Notification();
 				n.icon = R.drawable.icon; // TODO proper notification icon
-				Intent i = new Intent(Intent.ACTION_VIEW, twitterHome);
+				Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(
+					twitterRoot + URLEncoder.encode(t.getScreenName()) +
+					"/status/" + t.getID()));
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				n.setLatestEventInfo(Fetcher.this,
-					t.getScreenName(),
-					t.getText(),
-					PendingIntent.getActivity(Fetcher.this, 0, i, 0));
-				n.when = t.getDate().getTime();
+				n.contentIntent = PendingIntent.getActivity(
+					Fetcher.this, 0, i, 0);
+				
+				final String text = t.getText();
+				final RemoteViews v = new RemoteViews(
+					getPackageName(), (text.length() > 95) ?
+					R.layout.notification_longtext : R.layout.notification);
+				final Date d = t.getDate();
+				v.setTextViewText(R.id.notification_time, df.format(d));
+				v.setTextViewText(R.id.notification_user, t.getScreenName());
+				v.setTextViewText(R.id.notification_text, t.getText());
+				
+				n.contentView = v;
+				n.when = d.getTime();
 				n.defaults =
 					(sound ? Notification.DEFAULT_SOUND : 0) |
 					(vibrate ? Notification.DEFAULT_VIBRATE : 0) |
