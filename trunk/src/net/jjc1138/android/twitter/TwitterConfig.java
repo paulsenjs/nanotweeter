@@ -33,8 +33,11 @@ public class TwitterConfig extends Activity {
 	private CheckBox lights;
 	private EditText username;
 	private EditText password;
+	private Spinner filter_type;
+	private EditText filter;
 
 	private LinearLayout settings_changed;
+	private LinearLayout filter_needed;
 
 	private SharedPreferences prefs;
 	private SharedPreferences unsaved;
@@ -52,8 +55,11 @@ public class TwitterConfig extends Activity {
 		lights = (CheckBox) findViewById(R.id.lights);
 		username = (EditText) findViewById(R.id.username);
 		password = (EditText) findViewById(R.id.password);
+		filter_type = (Spinner) findViewById(R.id.filter_type);
+		filter = (EditText) findViewById(R.id.filter);
 		
 		settings_changed = (LinearLayout) findViewById(R.id.settings_changed);
+		filter_needed = (LinearLayout) findViewById(R.id.filter_needed);
 		
 		// Set up the interval choices:
 		final String[] intervalChoiceText = new String[INTERVALS.length];
@@ -96,9 +102,7 @@ public class TwitterConfig extends Activity {
 			public void onTextChanged(CharSequence s, int start, int before,
 				int count) {}
 		};
-		
-		enable.setOnCheckedChangeListener(checkWatcher);
-		interval.setOnItemSelectedListener(new OnItemSelectedListener() {
+		OnItemSelectedListener selectionWatcher = new OnItemSelectedListener() {
 			@Override
 			public void onItemSelected(AdapterView<?> parent, View view,
 				int position, long id) {
@@ -108,13 +112,18 @@ public class TwitterConfig extends Activity {
 		
 			@Override
 			public void onNothingSelected(AdapterView<?> parent) {}
-		});
+		};
+		
+		enable.setOnCheckedChangeListener(checkWatcher);
+		interval.setOnItemSelectedListener(selectionWatcher);
 		replies.setOnCheckedChangeListener(checkWatcher);
 		sound.setOnCheckedChangeListener(checkWatcher);
 		vibrate.setOnCheckedChangeListener(checkWatcher);
 		lights.setOnCheckedChangeListener(checkWatcher);
 		username.addTextChangedListener(textWatcher);
 		password.addTextChangedListener(textWatcher);
+		filter_type.setOnItemSelectedListener(selectionWatcher);
+		filter.addTextChangedListener(textWatcher);
 		
 		// Saving and reverting:
 		((Button) findViewById(R.id.save)).setOnClickListener(
@@ -175,6 +184,9 @@ public class TwitterConfig extends Activity {
 	private void settingsChanged() {
 		settings_changed.setVisibility(
 			isUISavedIn(prefs) ? View.GONE : View.VISIBLE);
+		filter_needed.setVisibility(
+			(filter_type.getSelectedItemPosition() == Fetcher.FILTER_NONE) ?
+				View.GONE : View.VISIBLE);
 	}
 
 	private void uiToPrefs(SharedPreferences p) {
@@ -187,6 +199,8 @@ public class TwitterConfig extends Activity {
 		e.putBoolean("lights", lights.isChecked());
 		e.putString("username", username.getText().toString());
 		e.putString("password", password.getText().toString());
+		e.putInt("filter_type", filter_type.getSelectedItemPosition());
+		e.putString("filter", filter.getText().toString());
 		e.commit();
 	}
 
@@ -209,6 +223,8 @@ public class TwitterConfig extends Activity {
 		lights.setChecked(p.getBoolean("lights", false));
 		username.setText(p.getString("username", ""));
 		password.setText(p.getString("password", ""));
+		filter_type.setSelection(p.getInt("filter_type", Fetcher.FILTER_NONE));
+		filter.setText(p.getString("filter", ""));
 	}
 
 	private boolean isUISavedIn(SharedPreferences p) {
@@ -221,6 +237,9 @@ public class TwitterConfig extends Activity {
 			vibrate.isChecked() == p.getBoolean("vibrate", false) &&
 			lights.isChecked() == p.getBoolean("lights", false) &&
 			username.getText().toString().equals(p.getString("username", "")) &&
-			password.getText().toString().equals(p.getString("password", ""));
+			password.getText().toString().equals(p.getString("password", "")) &&
+			filter_type.getSelectedItemPosition() ==
+				p.getInt("filter_type", Fetcher.FILTER_NONE) &&
+			filter.getText().toString().equals(p.getString("filter", ""));
 	}
 }
