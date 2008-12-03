@@ -14,9 +14,11 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import javax.xml.parsers.FactoryConfigurationError;
@@ -56,6 +58,10 @@ public class Fetcher extends Service {
 	final static String LOG_TAG = "nanoTweeter";
 
 	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
+
+	final static int FILTER_NONE = 0;
+	final static int FILTER_WHITELIST = 1;
+	final static int FILTER_BLACKLIST = 2;
 
 	private SharedPreferences prefs;
 
@@ -499,18 +505,45 @@ public class Fetcher extends Service {
 				new UsernamePasswordCredentials(username, password));
 			
 			final boolean firstRun = (lastFriendStatus == 1);
+			final int filterType = prefs.getInt(
+				"filter_type", FILTER_NONE);
 			
 			HttpEntity ent = null;
 			try {
 				ent = download(client, new URI(API_ROOT +
 					"statuses/friends_timeline.xml" + "?" +
 					(firstRun ? "" : ("since_id=" + lastFriendStatus + "&")) +
-					"count=" + (firstRun ?
+					"count=" + ((firstRun && filterType == FILTER_NONE) ?
 						FIRST_RUN_NOTIFICATIONS : MAX_NOTIFICATIONS)));
 				if (ent != null) {
 					reader.setContentHandler(new FriendStatusHandler());
 					is.setByteStream(ent.getContent());
 					reader.parse(is);
+					
+					if (filterType != FILTER_NONE) {
+						String[] filterNames =
+							prefs.getString("filter", "").split(" ");
+						// Sort so that we can use binary search in a moment:
+						Arrays.sort(filterNames);
+						
+						for (Iterator<Tweet> i = tweets.iterator();
+							i.hasNext();) {
+							
+							final String screenName = i.next().getScreenName();
+							final boolean filtered = Arrays.binarySearch(
+								filterNames, screenName) >= 0;
+							if (filterType == FILTER_WHITELIST) {
+								if (!filtered) {
+									i.remove();
+								}
+							} else {
+								assert filterType == FILTER_BLACKLIST;
+								if (filtered) {
+									i.remove();
+								}
+							}
+						}
+					}
 				}
 				
 				ent = download(client, new URI(API_ROOT +
@@ -563,11 +596,13 @@ public class Fetcher extends Service {
 			final boolean sound = prefs.getBoolean("sound", false);
 			final boolean vibrate = prefs.getBoolean("vibrate", false);
 			final boolean lights = prefs.getBoolean("lights", false);
+			
 			for (final Tweet t : tweets) {
 				final Notification n = new Notification();
 				n.icon = R.drawable.icon; // TODO proper notification icon
+				final String screenName = t.getScreenName();
 				Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(
-					twitterRoot + URLEncoder.encode(t.getScreenName()) +
+					twitterRoot + URLEncoder.encode(screenName) +
 					"/status/" + t.getID()));
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				n.contentIntent = PendingIntent.getActivity(
@@ -579,7 +614,7 @@ public class Fetcher extends Service {
 					R.layout.notification_longtext : R.layout.notification);
 				final Date d = t.getDate();
 				v.setTextViewText(R.id.notification_time, df.format(d));
-				v.setTextViewText(R.id.notification_user, t.getScreenName());
+				v.setTextViewText(R.id.notification_user, screenName);
 				v.setTextViewText(R.id.notification_text, text);
 				
 				n.contentView = v;
