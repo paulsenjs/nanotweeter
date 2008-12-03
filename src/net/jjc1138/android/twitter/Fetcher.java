@@ -580,14 +580,19 @@ public class Fetcher extends Service {
 				final Date d = t.getDate();
 				v.setTextViewText(R.id.notification_time, df.format(d));
 				v.setTextViewText(R.id.notification_user, t.getScreenName());
-				v.setTextViewText(R.id.notification_text, t.getText());
+				v.setTextViewText(R.id.notification_text, text);
 				
 				n.contentView = v;
 				n.when = d.getTime();
 				n.defaults =
 					(sound ? Notification.DEFAULT_SOUND : 0) |
-					(vibrate ? Notification.DEFAULT_VIBRATE : 0) |
-					(lights ? Notification.DEFAULT_LIGHTS : 0);
+					(vibrate ? Notification.DEFAULT_VIBRATE : 0);
+				if (lights) {
+					n.flags |= Notification.FLAG_SHOW_LIGHTS;
+					n.ledOnMS = 1000;
+					n.ledOffMS = 2000;
+					n.ledARGB = 0xFF00007F;
+				}
 				n.flags |= Notification.FLAG_AUTO_CANCEL;
 				
 				nm.notify((int) (t.getID() % Integer.MAX_VALUE), n);
