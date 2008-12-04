@@ -26,4 +26,5 @@
 <string name="reset_settings">Reset to saved settings</string>
 <string name="follow_link">Follow @nanoTweeter for updates about new versions.</string>
 <string name="unauthorized"><!-- This has to be short to fit in the notification. -->Username or password is wrong.</string>
+<string name="notification_is_message">(Direct message)</string>
 </resources>

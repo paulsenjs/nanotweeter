@@ -20,9 +20,14 @@
 	style="@style/notificationTime"
 	/>
 <TextView android:id="@+id/notification_user"
-	android:layout_width="fill_parent"
+	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	style="@style/notificationUsername"
+	/>
+<TextView android:id="@+id/notification_is_message"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	style="@style/notificationIsMessage"
 	/>
 </LinearLayout>
 <TextView android:id="@+id/notification_text"
