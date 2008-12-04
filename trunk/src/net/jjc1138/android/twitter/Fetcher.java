@@ -26,13 +26,21 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.AuthState;
+import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -501,9 +509,28 @@ public class Fetcher extends Service {
 			is.setEncoding("UTF-8");
 			
 			DefaultHttpClient client = new DefaultHttpClient();
+			final Credentials creds = new UsernamePasswordCredentials(
+				username, password);
 			client.getCredentialsProvider().setCredentials(
-				new AuthScope(API_HOST, API_PORT),
-				new UsernamePasswordCredentials(username, password));
+				new AuthScope(API_HOST, API_PORT), creds);
+			// This preemptively authenticates every request, which halves the
+			// number of requests we need to do by avoiding the preliminary 401
+			// responses. It works crudely by shoving the credentials into every
+			// request so this client MUST NOT be used with any other hosts
+			// without making this code more sophisticated first.
+			client.addRequestInterceptor(new HttpRequestInterceptor() {
+				@Override
+				public void process(HttpRequest request, HttpContext context)
+					throws HttpException, IOException {
+					
+					AuthState authState = (AuthState) context.getAttribute(
+						ClientContext.TARGET_AUTH_STATE);
+					if (authState.getAuthScheme() == null) {
+						authState.setAuthScheme(new BasicScheme());
+						authState.setCredentials(creds);
+					}
+				}
+			}, 0);
 			
 			final boolean firstRun = (lastFriendStatus == 1);
 			final int filterType = prefs.getInt(
