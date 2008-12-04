@@ -25,12 +25,13 @@ import android.widget.TextView;
 import android.widget.AdapterView.OnItemSelectedListener;
 
 public class TwitterConfig extends Activity {
-	final static int[] INTERVALS = { 3, 5, 10, 15, 30, 60 };
+	final static int[] INTERVALS = { 3, 5, 10, 15, 30, 60, 120 };
 	final static int DEFAULT_INTERVAL_INDEX = 4;
 	final static String PREFS = "prefs";
 
 	private CheckBox enable;
 	private Spinner interval;
+	private CheckBox messages;
 	private CheckBox replies;
 	private CheckBox sound;
 	private CheckBox vibrate;
@@ -53,6 +54,7 @@ public class TwitterConfig extends Activity {
 		
 		enable = (CheckBox) findViewById(R.id.enable);
 		interval = (Spinner) findViewById(R.id.interval);
+		messages = (CheckBox) findViewById(R.id.messages);
 		replies = (CheckBox) findViewById(R.id.replies);
 		sound = (CheckBox) findViewById(R.id.sound);
 		vibrate = (CheckBox) findViewById(R.id.vibrate);
@@ -120,6 +122,7 @@ public class TwitterConfig extends Activity {
 		
 		enable.setOnCheckedChangeListener(checkWatcher);
 		interval.setOnItemSelectedListener(selectionWatcher);
+		messages.setOnCheckedChangeListener(checkWatcher);
 		replies.setOnCheckedChangeListener(checkWatcher);
 		sound.setOnCheckedChangeListener(checkWatcher);
 		vibrate.setOnCheckedChangeListener(checkWatcher);
@@ -209,6 +212,7 @@ public class TwitterConfig extends Activity {
 		SharedPreferences.Editor e = p.edit();
 		e.putBoolean("enable", enable.isChecked());
 		e.putInt("interval", INTERVALS[interval.getSelectedItemPosition()]);
+		e.putBoolean("messages", messages.isChecked());
 		e.putBoolean("replies", replies.isChecked());
 		e.putBoolean("sound", sound.isChecked());
 		e.putBoolean("vibrate", vibrate.isChecked());
@@ -233,6 +237,7 @@ public class TwitterConfig extends Activity {
 		enable.setChecked(p.getBoolean("enable", true));
 		interval.setSelection(getIntervalIndexOf(
 			p.getInt("interval", INTERVALS[DEFAULT_INTERVAL_INDEX])));
+		messages.setChecked(p.getBoolean("messages", true));
 		replies.setChecked(p.getBoolean("replies", true));
 		sound.setChecked(p.getBoolean("sound", false));
 		vibrate.setChecked(p.getBoolean("vibrate", false));
@@ -248,6 +253,7 @@ public class TwitterConfig extends Activity {
 			enable.isChecked() == p.getBoolean("enable", true) &&
 			INTERVALS[interval.getSelectedItemPosition()] ==
 				p.getInt("interval", INTERVALS[DEFAULT_INTERVAL_INDEX]) &&
+			messages.isChecked() == p.getBoolean("messages", true) &&
 			replies.isChecked() == p.getBoolean("replies", true) &&
 			sound.isChecked() == p.getBoolean("sound", false) &&
 			vibrate.isChecked() == p.getBoolean("vibrate", false) &&
