@@ -52,6 +52,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.View;
 import android.widget.RemoteViews;
 
 public class Fetcher extends Service {
@@ -603,20 +604,24 @@ public class Fetcher extends Service {
 				final Notification n = new Notification();
 				n.icon = R.drawable.icon; // TODO proper notification icon
 				final String screenName = t.getScreenName();
+				final long id = t.getID();
+				final boolean message = t instanceof Message;
 				Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(
-					twitterRoot + URLEncoder.encode(screenName) +
-					"/status/" + t.getID()));
+					twitterRoot + (message ? "direct_messages" :
+					URLEncoder.encode(screenName) + "/status/" + id)));
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				n.contentIntent = PendingIntent.getActivity(
 					Fetcher.this, 0, i, 0);
 				
 				final String text = t.getText();
 				final RemoteViews v = new RemoteViews(
-					getPackageName(), (text.length() > 95) ?
+					getPackageName(), (text.length() > 90) ?
 					R.layout.notification_longtext : R.layout.notification);
 				final Date d = t.getDate();
 				v.setTextViewText(R.id.notification_time, df.format(d));
 				v.setTextViewText(R.id.notification_user, screenName);
+				v.setViewVisibility(R.id.notification_is_message,
+					message ? View.VISIBLE : View.GONE);
 				v.setTextViewText(R.id.notification_text, text);
 				
 				n.contentView = v;
@@ -632,7 +637,7 @@ public class Fetcher extends Service {
 				}
 				n.flags |= Notification.FLAG_AUTO_CANCEL;
 				
-				nm.notify((int) (t.getID() % Integer.MAX_VALUE), n);
+				nm.notify((int) (id % Integer.MAX_VALUE), n);
 			}
 			
 			{
