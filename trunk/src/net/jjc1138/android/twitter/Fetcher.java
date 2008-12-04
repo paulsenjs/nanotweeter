@@ -546,13 +546,15 @@ public class Fetcher extends Service {
 					}
 				}
 				
-				ent = download(client, new URI(API_ROOT +
-					"direct_messages.xml" + "?" +
-					"since_id=" + lastMessage));
-				if (ent != null) {
-					reader.setContentHandler(new MessageHandler());
-					is.setByteStream(ent.getContent());
-					reader.parse(is);
+				if (prefs.getBoolean("messages", false)) {
+					ent = download(client, new URI(API_ROOT +
+						"direct_messages.xml" + "?" +
+						"since_id=" + lastMessage));
+					if (ent != null) {
+						reader.setContentHandler(new MessageHandler());
+						is.setByteStream(ent.getContent());
+						reader.parse(is);
+					}
 				}
 				
 				if (prefs.getBoolean("replies", false)) {
