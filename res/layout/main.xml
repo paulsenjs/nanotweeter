@@ -4,6 +4,12 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	>
+<TextView
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:text="@string/configuration_title"
+	style="?android:listSeparatorTextViewStyle"
+	/>
 <ScrollView
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
@@ -14,12 +20,6 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	>
-<TextView
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:text="@string/configuration_title"
-	style="?android:listSeparatorTextViewStyle"
-	/>
 <TextView android:id="@+id/follow_link"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
@@ -134,7 +134,6 @@
 	android:orientation="horizontal"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:gravity="fill"
 	android:visibility="gone"
 	>
 <Button android:id="@+id/save"
