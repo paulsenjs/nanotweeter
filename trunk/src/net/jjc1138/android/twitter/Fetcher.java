@@ -413,8 +413,7 @@ public class Fetcher extends Service {
 							Status s = new Status(
 								id, createdAt, screenName, text);
 							tweets.addFirst(s);
-							// FIXME remove debug (privacy):
-							Log.v(LOG_TAG, s.toString());
+							// Log.v(LOG_TAG, s.toString());
 						}
 					} else if (pathEquals(createdAtPath)) {
 						try {
@@ -474,8 +473,7 @@ public class Fetcher extends Service {
 						Message m = new Message(
 							id, createdAt, screenName, text);
 						tweets.addFirst(m);
-						// FIXME remove debug (privacy):
-						Log.v(LOG_TAG, m.toString());
+						// Log.v(LOG_TAG, m.toString());
 					} else if (pathEquals(createdAtPath)) {
 						try {
 							createdAt = twitterDateFormat.parse(
