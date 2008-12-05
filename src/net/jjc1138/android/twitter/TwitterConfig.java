@@ -6,7 +6,6 @@ import java.text.MessageFormat;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
@@ -144,7 +143,6 @@ public class TwitterConfig extends Activity {
 				if (sound.isChecked()) {
 					MediaPlayer mp = MediaPlayer.create(
 						TwitterConfig.this, R.raw.tweet);
-					mp.setAudioStreamType(AudioManager.STREAM_RING);
 					mp.setOnCompletionListener(new OnCompletionListener() {
 						@Override
 						public void onCompletion(MediaPlayer mp) {
