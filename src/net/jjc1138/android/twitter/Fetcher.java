@@ -626,8 +626,12 @@ public class Fetcher extends Service {
 			
 			final int limit =
 				firstRun ? FIRST_RUN_NOTIFICATIONS : MAX_NOTIFICATIONS;
-			for (int nTweets = tweets.size(); nTweets > limit; --nTweets) {
+			int nTweets;
+			for (nTweets = tweets.size(); nTweets > limit; --nTweets) {
 				tweets.removeFirst();
+			}
+			if (nTweets == 0) {
+				return;
 			}
 			
 			final String twitterRoot = "http://m.twitter.com/";
