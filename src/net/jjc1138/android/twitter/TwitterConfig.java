@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -140,8 +141,15 @@ public class TwitterConfig extends Activity {
 			@Override
 			public void onClick(View v) {
 				if (sound.isChecked()) {
-					MediaPlayer.create(
-						TwitterConfig.this, R.raw.tweet).start();
+					MediaPlayer mp = MediaPlayer.create(
+						TwitterConfig.this, R.raw.tweet);
+					mp.setOnCompletionListener(new OnCompletionListener() {
+						@Override
+						public void onCompletion(MediaPlayer mp) {
+							mp.release();
+						}
+					});
+					mp.start();
 				}
 			}
 		});
