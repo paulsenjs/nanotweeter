@@ -93,18 +93,19 @@ public class Fetcher extends Service {
 	public void onCreate() {
 		super.onCreate();
 		
-		prefs = getSharedPreferences(TwitterConfig.PREFS, 0);
-		handler = new Handler();
 		wakeLock = ((PowerManager) getSystemService(POWER_SERVICE))
 			.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG);
 		wakeLock.setReferenceCounted(false);
+		wakeLock.acquire();
+		
+		prefs = getSharedPreferences(TwitterConfig.PREFS, 0);
+		handler = new Handler();
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		
-		wakeLock.acquire();
 		Log.d(LOG_TAG, "Service started.");
 		
 		if (!prefs.getBoolean("enable", false)) {
