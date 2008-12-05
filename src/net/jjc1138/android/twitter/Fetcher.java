@@ -3,7 +3,9 @@ package net.jjc1138.android.twitter;
 import static org.apache.commons.lang.StringEscapeUtils.unescapeHtml;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URI;
@@ -54,6 +56,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
@@ -66,11 +69,13 @@ import android.widget.RemoteViews;
 public class Fetcher extends Service {
 	final static String LOG_TAG = "nanoTweeter";
 
-	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
-
 	final static int FILTER_NONE = 0;
 	final static int FILTER_WHITELIST = 1;
 	final static int FILTER_BLACKLIST = 2;
+
+	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
+	final static String TWEET_SOUND_FILENAME = "tweet.ogg";
+	final static long[] VIBRATION_PATTERN = new long[] { 0, 100, 60, 100 };
 
 	private SharedPreferences prefs;
 
@@ -624,6 +629,39 @@ public class Fetcher extends Service {
 			final NotificationManager nm =
 				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			final boolean sound = prefs.getBoolean("sound", false);
+			Uri notificationSound = null;
+			if (sound) {
+				notificationSound = Uri.fromFile(
+					getFileStreamPath(TWEET_SOUND_FILENAME));
+				boolean exists = false;
+				for (String i : fileList()) {
+					if (i.equals(TWEET_SOUND_FILENAME)) {
+						exists = true;
+						break;
+					}
+				}
+				if (!exists) {
+					// This should only ever have to be done once per
+					// installation. If the file is ever changed then the
+					// filename must be changed ("tweet2.ogg" or whatever), and
+					// you must delete the files from old versions here.
+					try {
+						InputStream ris = getResources().openRawResource(
+							R.raw.tweet);
+						FileOutputStream fos = openFileOutput(
+							TWEET_SOUND_FILENAME, MODE_WORLD_READABLE);
+						byte[] buffer = new byte[8192];
+						int read;
+						while ((read = ris.read(buffer)) > 0) {
+							fos.write(buffer, 0, read);
+						}
+						ris.close();
+						fos.close();
+					} catch (IOException e) {
+						deleteFile(TWEET_SOUND_FILENAME);
+					}
+				}
+			}
 			final boolean vibrate = prefs.getBoolean("vibrate", false);
 			final boolean lights = prefs.getBoolean("lights", false);
 			
@@ -653,9 +691,13 @@ public class Fetcher extends Service {
 				
 				n.contentView = v;
 				n.when = d.getTime();
-				n.defaults =
-					(sound ? Notification.DEFAULT_SOUND : 0) |
-					(vibrate ? Notification.DEFAULT_VIBRATE : 0);
+				if (sound) {
+					n.audioStreamType = AudioManager.STREAM_RING;
+					n.sound = notificationSound;
+				}
+				if (vibrate) {
+					n.vibrate = VIBRATION_PATTERN;
+				}
 				if (lights) {
 					n.flags |= Notification.FLAG_SHOW_LIGHTS;
 					n.ledOnMS = 1000;
@@ -702,8 +744,9 @@ public class Fetcher extends Service {
 			} catch (DownloadException e) {
 				Log.v(LOG_TAG, "A download failed.");
 			} finally {
-				// This is in a finally because if stopIfIdle() isn't called
-				// then the wake lock would be held forever. That would suck.
+				// This is in a finally because if there was an unexpected
+				// runtime exception and stopIfIdle() wasn't called then the
+				// wake lock would be held forever. That would suck.
 				inProgress = false;
 				handler.post(new Runnable() {
 					@Override
