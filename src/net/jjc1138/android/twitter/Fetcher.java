@@ -75,8 +75,8 @@ public class Fetcher extends Service {
 	final static int FILTER_BLACKLIST = 2;
 
 	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
-	final static String TWEET_SOUND_FILENAME = "tweet.ogg";
 	final static long[] VIBRATION_PATTERN = new long[] { 0, 100, 60, 100 };
+	private final static String TWEET_SOUND_FILENAME = "tweet.ogg";
 
 	private SharedPreferences prefs;
 

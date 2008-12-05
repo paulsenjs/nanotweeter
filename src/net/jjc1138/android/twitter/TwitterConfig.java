@@ -6,13 +6,16 @@ import java.text.MessageFormat;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
 import android.text.style.UnderlineSpan;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -131,6 +134,28 @@ public class TwitterConfig extends Activity {
 		password.addTextChangedListener(textWatcher);
 		filter_type.setOnItemSelectedListener(selectionWatcher);
 		filter.addTextChangedListener(textWatcher);
+		
+		// Previews of notification actions:
+		sound.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (sound.isChecked()) {
+					MediaPlayer.create(
+						TwitterConfig.this, R.raw.tweet).start();
+				}
+			}
+		});
+		vibrate.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (vibrate.isChecked()) {
+					// SRSLY? They couldn't think of a better name for this
+					// class?
+					((Vibrator) getSystemService(VIBRATOR_SERVICE))
+						.vibrate(Fetcher.VIBRATION_PATTERN, -1);
+				}
+			}
+		});
 		
 		// Saving and reverting:
 		((Button) findViewById(R.id.save)).setOnClickListener(
