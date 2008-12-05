@@ -56,6 +56,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -514,6 +515,13 @@ public class Fetcher extends Service {
 			is.setEncoding("UTF-8");
 			
 			DefaultHttpClient client = new DefaultHttpClient();
+			try {
+				client.getParams().setParameter("http.useragent",
+					"nanoTweeter/" + getPackageManager().getPackageInfo(
+						getPackageName(), 0).versionName);
+			} catch (NameNotFoundException e) {
+				assert false;
+			}
 			final Credentials creds = new UsernamePasswordCredentials(
 				username, password);
 			client.getCredentialsProvider().setCredentials(
