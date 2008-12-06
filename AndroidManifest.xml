@@ -21,6 +21,7 @@
 		</activity>
 		<service android:name=".Fetcher"
 			android:permission="net.jjc1138.android.twitter.privateservices" />
+		<receiver android:name=".AlarmReceiver" />
 		<receiver android:name=".BootReceiver">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
