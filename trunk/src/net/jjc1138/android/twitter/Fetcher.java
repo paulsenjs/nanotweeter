@@ -61,7 +61,6 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
@@ -82,7 +81,6 @@ public class Fetcher extends Service {
 
 	private FetcherThread fetcherThread;
 	private Handler handler;
-	private PowerManager.WakeLock wakeLock;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -92,11 +90,6 @@ public class Fetcher extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		
-		wakeLock = ((PowerManager) getSystemService(POWER_SERVICE))
-			.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG);
-		wakeLock.setReferenceCounted(false);
-		wakeLock.acquire();
 		
 		prefs = getSharedPreferences(TwitterConfig.PREFS, 0);
 		handler = new Handler();
@@ -120,8 +113,8 @@ public class Fetcher extends Service {
 				(prefs.getInt("interval",
 					TwitterConfig.INTERVALS[
 						TwitterConfig.DEFAULT_INTERVAL_INDEX]) * 60 * 1000),
-			PendingIntent.getService(this, 0,
-				new Intent(this, Fetcher.class), 0));
+			PendingIntent.getBroadcast(this, 0,
+				new Intent(this, AlarmReceiver.class), 0));
 		Log.d(LOG_TAG, "Scheduled next run.");
 		
 		if (fetcherThread != null && fetcherThread.inProgress()) {
@@ -195,7 +188,7 @@ public class Fetcher extends Service {
 			
 			if (status == HttpStatus.SC_UNAUTHORIZED) {
 				Notification n = new Notification();
-				n.icon = R.drawable.icon; // TODO proper error icon
+				n.icon = R.drawable.notification_icon_status_bar;
 				Intent i = new Intent(
 					Fetcher.this, TwitterConfig.class);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -678,7 +671,7 @@ public class Fetcher extends Service {
 			
 			for (final Tweet t : tweets) {
 				final Notification n = new Notification();
-				n.icon = R.drawable.icon; // TODO proper notification icon
+				n.icon = R.drawable.notification_icon_status_bar;
 				final String screenName = t.getScreenName();
 				final long id = t.getID();
 				final boolean message = t instanceof Message;
@@ -777,7 +770,7 @@ public class Fetcher extends Service {
 			Log.d(LOG_TAG, "Not stopping service because thread is running.");
 			return;
 		}
-		wakeLock.release();
+		FetcherWakeLock.release();
 		Log.d(LOG_TAG, "Stopping service.");
 		stopSelf();
 	}

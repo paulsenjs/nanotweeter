@@ -178,9 +178,12 @@ public class TwitterConfig extends Activity {
 					uiToPrefs(prefs);
 					settingsChanged();
 					
+					// Trigger the AlarmReceiver instead of starting the service
+					// directly so that the wake lock gets acquired.
 					// The service will take care of rescheduling itself
 					// appropriately.
-					startService(new Intent(TwitterConfig.this, Fetcher.class));
+					sendBroadcast(
+						new Intent(TwitterConfig.this, AlarmReceiver.class));
 				}
 			});
 		((Button) findViewById(R.id.revert)).setOnClickListener(
