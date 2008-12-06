@@ -206,6 +206,16 @@ public class TwitterConfig extends Activity {
 					Uri.parse("http://m.twitter.com/nanoTweeter"))));
 			}
 		});
+		
+		// This is here to get the fetching process going after a new version is
+		// installed. That's necessary because existing alarms are canceled when
+		// a package is uninstalled. Obviously this relies on the user starting
+		// the configuration activity after install, but I can't find a more
+		// reliable mechanism.
+		if (prefs.getBoolean("enable", false)) {
+			sendBroadcast(
+				new Intent(TwitterConfig.this, AlarmReceiver.class));
+		}
 	}
 
 	@Override
