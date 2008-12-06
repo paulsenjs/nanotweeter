@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<style name="notificationIcon">
+	<item name="android:layout_marginLeft">2sp</item>
+	<item name="android:src">@drawable/notification_icon_view</item>
+</style>
+<style name="notificationTime">
+	<item name="android:layout_marginLeft">3sp</item>
+	<item name="android:textColor">#000</item>
+	<item name="android:textSize">12sp</item>
+</style>
+<style name="notificationUsername" parent="notificationTime">
+	<item name="android:layout_marginLeft">4sp</item>
+	<item name="android:textStyle">bold</item>
+</style>
+<style name="notificationIsMessage" parent="notificationTime">
+	<item name="android:layout_marginLeft">4sp</item>
+	<item name="android:text">@string/notification_is_message</item>
+	<item name="android:visibility">gone</item>
+</style>
+<style name="notificationText">
+	<item name="android:textColor">#000</item>
+</style>
+<style name="webLink">
+	<item name="android:focusable">true</item>
+	<item name="android:textColor">@color/link</item>
+	<!-- This is partly for legibility against the black background, and partly to make it easier to tap with a finger: -->
+	<item name="android:textSize">18sp</item>
+	<!-- This allows the text to be styled as underlined, which apparently has to be done programmatically: -->
+	<item name="android:bufferType">spannable</item>
+</style>
+</resources>
