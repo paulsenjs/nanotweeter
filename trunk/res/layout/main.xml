@@ -43,26 +43,14 @@
 	style="?android:listSeparatorTextViewStyle"
 	android:layout_marginTop="15sp"
 	/>
-<TextView
+<TextView android:id="@+id/username"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="@string/username"
 	/>
-<EditText android:id="@+id/username"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:singleLine="true"
-	/>
-<TextView
+<Button android:id="@+id/sign_in"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="@string/password"
-	/>
-<EditText android:id="@+id/password"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:password="true"
-	android:singleLine="true"
+	android:text="@string/sign_in"
 	/>
 <TextView
 	android:layout_width="fill_parent"

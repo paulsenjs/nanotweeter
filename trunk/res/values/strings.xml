@@ -20,11 +20,17 @@
 <string name="vibrate">vibration</string>
 <string name="lights">light flashing</string>
 <string name="account">Twitter Account</string>
-<string name="username">Your username or e-mail address</string>
-<string name="password">Password</string>
+<string name="sign_in">Sign in</string>
+<string name="signed_in_as">Signed in as %1$s</string>
+<string name="change_account">Use a different account</string>
 <string name="save_settings">Apply/save settings</string>
 <string name="reset_settings">Reset to saved settings</string>
 <string name="follow_link">Follow @nanoTweeter for updates about new versions.</string>
-<string name="unauthorized"><!-- This has to be short to fit in the notification. -->Username or password is wrong.</string>
+<string name="unauthorized"><!-- This has to be short to fit in the notification. -->Unauthorized. Please sign in again.</string>
 <string name="notification_is_message">(Direct message)</string>
+<string name="fetching_request_token">Contacting Twitter...</string>
+<string name="fetching_access_token">Checking Twitter access...</string>
+<string name="upgraders_need_to_sign_in_again">Hello!\n\nTwitter have changed the way they do signing in for apps, so you need to sign in again to keep using nanoTweeter.\n\nSorry for the inconvenience!</string>
+<string name="ok">OK</string>
+<string name="sign_in_again_later">I\'ll do it later</string>
 </resources>
