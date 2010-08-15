@@ -8,6 +8,7 @@ public class BootReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
+		FetcherWakeLock.acquire(context);
 		context.startService(new Intent(context, Fetcher.class));
 	}
 
