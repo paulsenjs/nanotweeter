@@ -303,8 +303,10 @@ public class TwitterConfig extends Activity {
 	private void settingsChanged() {
 		settings_changed.setVisibility(
 			isUISavedIn(prefs) ? View.GONE : View.VISIBLE);
+		int filterSelected = filter_type.getSelectedItemPosition();
 		filter_needed.setVisibility(
-			(filter_type.getSelectedItemPosition() == Fetcher.FILTER_NONE) ?
+			(filterSelected == Fetcher.FILTER_NONE ||
+			filterSelected == Fetcher.FILTER_ALL) ?
 				View.GONE : View.VISIBLE);
 	}
 
@@ -353,7 +355,7 @@ public class TwitterConfig extends Activity {
 		sound.setChecked(p.getBoolean("sound", false));
 		vibrate.setChecked(p.getBoolean("vibrate", false));
 		lights.setChecked(p.getBoolean("lights", false));
-		filter_type.setSelection(p.getInt("filter_type", Fetcher.FILTER_NONE));
+		filter_type.setSelection(p.getInt("filter_type", Fetcher.FILTER_ALL));
 		filter.setText(p.getString("filter", ""));
 	}
 
@@ -368,7 +370,7 @@ public class TwitterConfig extends Activity {
 			vibrate.isChecked() == p.getBoolean("vibrate", false) &&
 			lights.isChecked() == p.getBoolean("lights", false) &&
 			filter_type.getSelectedItemPosition() ==
-				p.getInt("filter_type", Fetcher.FILTER_NONE) &&
+				p.getInt("filter_type", Fetcher.FILTER_ALL) &&
 			filter.getText().toString().equals(p.getString("filter", ""));
 	}
 }
