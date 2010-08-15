@@ -33,4 +33,7 @@
 <string name="upgraders_need_to_sign_in_again">Hello!\n\nTwitter have changed the way they do signing in for apps, so you need to sign in again to keep using nanoTweeter.\n\nSorry for the inconvenience!</string>
 <string name="ok">OK</string>
 <string name="sign_in_again_later">I\'ll do it later</string>
+<string name="auth_not_completed">The signing-in process isn\'t completed yet. If you see the confirmation page from Twitter then please wait a few more seconds and it will finish automatically.\n\nWould you like to cancel signing in?</string>
+<string name="cancel_auth">Cancel signing in</string>
+<string name="dont_cancel_auth">Don\'t cancel</string>
 </resources>

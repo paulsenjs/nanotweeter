@@ -10,6 +10,8 @@ import oauth.signpost.exception.OAuthMessageSignerException;
 import oauth.signpost.exception.OAuthNotAuthorizedException;
 import oauth.signpost.http.HttpParameters;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -18,6 +20,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -57,19 +60,6 @@ public class TwitterAuth extends Activity {
 		setContentView(R.layout.auth);
 		
 		final String callback = "https://auth.nanotweeter.com/success";
-		final DialogInterface.OnCancelListener progressCancel =
-			new DialogInterface.OnCancelListener() {
-		
-			@Override
-			public void onCancel(DialogInterface dialog) {
-				task.finish(new ActivityTask.Finisher<TwitterAuth>() {
-					@Override
-					public void finish(TwitterAuth activity) {
-						activity.finish();
-					}
-				});
-			}
-		};
 		final OAuthProvider provider = getOAuthProvider();
 		final OAuthConsumer consumer = getOAuthConsumer(this);
 		
@@ -159,13 +149,20 @@ public class TwitterAuth extends Activity {
 					
 						@Override
 						protected ProgressDialog makeProgressDialog(
-							TwitterAuth activity) {
+							final TwitterAuth activity) {
 							
 							final ProgressDialog pd =
 								new ProgressDialog(activity);
 							pd.setMessage(activity.getString(
 								R.string.fetching_access_token));
-							pd.setOnCancelListener(progressCancel);
+							pd.setOnCancelListener(
+								new DialogInterface.OnCancelListener() {
+							
+								@Override
+								public void onCancel(DialogInterface dialog) {
+									activity.showDialog(0);
+								}
+							});
 							return pd;
 						}
 					
@@ -228,11 +225,18 @@ public class TwitterAuth extends Activity {
 			}
 		
 			@Override
-			protected ProgressDialog makeProgressDialog(TwitterAuth activity) {
+			protected ProgressDialog makeProgressDialog(
+				final TwitterAuth activity) {
+				
 				final ProgressDialog pd = new ProgressDialog(activity);
 				pd.setMessage(
 					activity.getString(R.string.fetching_request_token));
-				pd.setOnCancelListener(progressCancel);
+				pd.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						activity.showDialog(0);
+					}
+				});
 				return pd;
 			}
 		
@@ -248,6 +252,33 @@ public class TwitterAuth extends Activity {
 	@Override
 	public Object onRetainNonConfigurationInstance() {
 		return task;
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			showDialog(0);
+			return true;
+		} else {
+			return super.onKeyDown(keyCode, event);
+		}
+	}
+
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		return new AlertDialog.Builder(this)
+			.setMessage(R.string.auth_not_completed)
+			.setPositiveButton(R.string.cancel_auth,
+				new DialogInterface.OnClickListener() {
+			
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					finish();
+				}
+			})
+			.setNegativeButton(R.string.dont_cancel_auth, null)
+			.setCancelable(false)
+			.create();
 	}
 
 	@Override
