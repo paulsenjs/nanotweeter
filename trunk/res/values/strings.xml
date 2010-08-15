@@ -10,10 +10,11 @@
 <string name="also_check">Also check for:</string>
 <string name="messages">direct messages</string>
 <string name="replies">\@ replies</string>
-<string name="filter_label">Show updates for:</string>
+<string name="filter_label">Also show all tweets for:</string>
 <string name="filter_none">everyone you follow</string>
 <string name="filter_whitelist">only these users:</string>
 <string name="filter_blacklist">everyone except these users:</string>
+<string name="filter_all">nobody</string>
 <string name="filter_instructions">(List the usernames separated by spaces.)</string>
 <string name="notification_options">Notify with:</string>
 <string name="sound">sound</string>

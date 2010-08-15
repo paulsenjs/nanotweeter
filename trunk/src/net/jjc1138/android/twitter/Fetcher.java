@@ -67,6 +67,7 @@ public class Fetcher extends Service {
 	final static int FILTER_NONE = 0;
 	final static int FILTER_WHITELIST = 1;
 	final static int FILTER_BLACKLIST = 2;
+	final static int FILTER_ALL = 3;
 
 	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
 	final static long[] VIBRATION_PATTERN = new long[] { 0, 100, 60, 100 };
@@ -531,41 +532,46 @@ public class Fetcher extends Service {
 			
 			final boolean firstRun = (lastFriendStatus == 1);
 			final int filterType = prefs.getInt(
-				"filter_type", FILTER_NONE);
+				"filter_type", FILTER_ALL);
 			
 			HttpEntity ent = null;
 			try {
-				ent = download(client, consumer, new URI(API_ROOT +
-					"statuses/friends_timeline.xml" + "?" +
-					(firstRun ? "" : ("since_id=" + lastFriendStatus + "&")) +
-					"count=" + ((firstRun && filterType == FILTER_NONE) ?
-						FIRST_RUN_NOTIFICATIONS : MAX_NOTIFICATIONS)));
-				if (ent != null) {
-					reader.setContentHandler(new FriendStatusHandler());
-					is.setByteStream(ent.getContent());
-					reader.parse(is);
-					
-					if (filterType != FILTER_NONE) {
-						String[] filterNames =
-							prefs.getString("filter", "").split(" ");
-						// Sort so that we can use binary search in a moment:
-						Arrays.sort(filterNames);
+				if (filterType != FILTER_ALL) {
+					ent = download(client, consumer, new URI(API_ROOT +
+						"statuses/friends_timeline.xml" + "?" +
+						(firstRun ? "" :
+							("since_id=" + lastFriendStatus + "&")) +
+						"count=" + ((firstRun && filterType == FILTER_NONE) ?
+							FIRST_RUN_NOTIFICATIONS : MAX_NOTIFICATIONS)));
+					if (ent != null) {
+						reader.setContentHandler(new FriendStatusHandler());
+						is.setByteStream(ent.getContent());
+						reader.parse(is);
 						
-						for (Iterator<Tweet> i = tweets.iterator();
-							i.hasNext();) {
+						if (filterType != FILTER_NONE) {
+							String[] filterNames =
+								prefs.getString("filter", "").split(" ");
+							// Sort so that we can use binary search in a
+							// moment:
+							Arrays.sort(filterNames);
 							
-							final String screenName = i.next().getScreenName();
-							final boolean filtered = Arrays.binarySearch(
-								filterNames, screenName,
-								String.CASE_INSENSITIVE_ORDER) >= 0;
-							if (filterType == FILTER_WHITELIST) {
-								if (!filtered) {
-									i.remove();
-								}
-							} else {
-								assert filterType == FILTER_BLACKLIST;
-								if (filtered) {
-									i.remove();
+							for (Iterator<Tweet> i = tweets.iterator();
+								i.hasNext();) {
+								
+								final String screenName =
+									i.next().getScreenName();
+								final boolean filtered = Arrays.binarySearch(
+									filterNames, screenName,
+									String.CASE_INSENSITIVE_ORDER) >= 0;
+								if (filterType == FILTER_WHITELIST) {
+									if (!filtered) {
+										i.remove();
+									}
+								} else {
+									assert filterType == FILTER_BLACKLIST;
+									if (filtered) {
+										i.remove();
+									}
 								}
 							}
 						}
