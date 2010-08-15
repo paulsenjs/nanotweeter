@@ -18,6 +18,8 @@ import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
 import android.text.style.UnderlineSpan;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -222,25 +224,52 @@ public class TwitterConfig extends Activity {
 		}
 		
 		if (prefs.getString("password", "").length() > 0) {
-			showDialog(0);
+			showDialog(DIALOG_UPGRADERS_NEED_TO_SIGN_IN_AGAIN);
+		}
+	}
+
+	private static final int DIALOG_UPGRADERS_NEED_TO_SIGN_IN_AGAIN = 0;
+	private static final int DIALOG_CREDITS = 1;
+
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		if (id == DIALOG_UPGRADERS_NEED_TO_SIGN_IN_AGAIN) {
+			return new AlertDialog.Builder(this)
+				.setMessage(R.string.upgraders_need_to_sign_in_again)
+				.setPositiveButton(R.string.ok,
+					new DialogInterface.OnClickListener() {
+				
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						startActivity(new Intent(
+							TwitterConfig.this, TwitterAuth.class));
+					}
+				})
+				.setNegativeButton(R.string.sign_in_again_later, null)
+				.create();
+		} else if (id == DIALOG_CREDITS) {
+			return new AlertDialog.Builder(this)
+				.setMessage(R.string.credits_text)
+				.setPositiveButton(R.string.ok, null)
+				.create();
+		} else {
+			assert false;
+			return null;
 		}
 	}
 
 	@Override
-	protected Dialog onCreateDialog(int id) {
-		return new AlertDialog.Builder(this)
-			.setMessage(R.string.upgraders_need_to_sign_in_again)
-			.setPositiveButton(R.string.ok,
-				new DialogInterface.OnClickListener() {
-			
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					startActivity(new Intent(
-						TwitterConfig.this, TwitterAuth.class));
-				}
-			})
-			.setNegativeButton(R.string.sign_in_again_later, null)
-			.create();
+	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.add(R.string.credits).setOnMenuItemClickListener(
+			new MenuItem.OnMenuItemClickListener() {
+		
+			@Override
+			public boolean onMenuItemClick(MenuItem arg0) {
+				showDialog(DIALOG_CREDITS);
+				return true;
+			}
+		});
+		return true;
 	}
 
 	@Override
