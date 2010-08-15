@@ -27,22 +27,17 @@ import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
+import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.AuthState;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HttpContext;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -75,6 +70,7 @@ public class Fetcher extends Service {
 
 	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
 	final static long[] VIBRATION_PATTERN = new long[] { 0, 100, 60, 100 };
+	final static int ERROR_NOTIFICATION_ID = 0;
 	private final static String TWEET_SOUND_FILENAME = "tweet.ogg";
 
 	private SharedPreferences prefs;
@@ -129,7 +125,6 @@ public class Fetcher extends Service {
 
 	private class FetcherThread extends Thread {
 		private final Charset FILE_CHARSET = Charset.forName("US-ASCII");
-		private static final int ERROR_NOTIFICATION_ID = 0;
 	
 		private static final String API_HOST = "twitter.com";
 		private static final int API_PORT = 443;
@@ -167,42 +162,60 @@ public class Fetcher extends Service {
 			private static final long serialVersionUID = 1L;
 		}
 	
-		private HttpEntity download(DefaultHttpClient client, URI uri)
-			throws DownloadException {
+		private void showUnauthorizedNotification() {
+			Notification n = new Notification();
+			n.icon = R.drawable.notification_icon_status_bar;
+			Intent i = new Intent(
+				Fetcher.this, TwitterConfig.class);
+			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			n.setLatestEventInfo(Fetcher.this,
+				getString(R.string.app_name),
+				getString(R.string.unauthorized),
+				PendingIntent.getActivity(Fetcher.this, 0, i, 0));
+			n.flags |= Notification.FLAG_AUTO_CANCEL;
+			((NotificationManager) getSystemService(NOTIFICATION_SERVICE))
+				.notify(ERROR_NOTIFICATION_ID, n);
+		}
+	
+		private HttpEntity download(
+			DefaultHttpClient client, CommonsHttpOAuthConsumer consumer,
+			URI uri) throws DownloadException {
 			
 			HttpResponse r = null;
 			try {
-				r = client.execute(new HttpGet(uri));
+				final HttpGet get = new HttpGet(uri);
+				consumer.sign(get);
+				r = client.execute(get);
 			} catch (ClientProtocolException e) {
 				assert false;
 				throw new DownloadException();
 			} catch (IOException e) {
+				throw new DownloadException();
+			} catch (OAuthMessageSignerException e) {
+				// FIXME OAuth exception
+				e.printStackTrace();
+				throw new DownloadException();
+			} catch (OAuthExpectationFailedException e) {
+				// FIXME OAuth exception
+				e.printStackTrace();
+				throw new DownloadException();
+			} catch (OAuthCommunicationException e) {
+				// FIXME OAuth exception
+				e.printStackTrace();
 				throw new DownloadException();
 			}
 			
 			int status = r.getStatusLine().getStatusCode();
 			HttpEntity ent = r.getEntity();
 			
-			NotificationManager nm =
-				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-			
 			if (status == HttpStatus.SC_UNAUTHORIZED) {
-				Notification n = new Notification();
-				n.icon = R.drawable.notification_icon_status_bar;
-				Intent i = new Intent(
-					Fetcher.this, TwitterConfig.class);
-				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				n.setLatestEventInfo(Fetcher.this,
-					getString(R.string.app_name),
-					getString(R.string.unauthorized),
-					PendingIntent.getActivity(Fetcher.this, 0, i, 0));
-				n.flags |= Notification.FLAG_AUTO_CANCEL;
-				nm.notify(ERROR_NOTIFICATION_ID, n);
+				showUnauthorizedNotification();
 				
 				finish(ent);
 				throw new DownloadException();
 			} else {
-				nm.cancel(ERROR_NOTIFICATION_ID);
+				((NotificationManager) getSystemService(NOTIFICATION_SERVICE))
+					.cancel(ERROR_NOTIFICATION_ID);
 			}
 			
 			if (status == HttpStatus.SC_OK) {
@@ -235,11 +248,16 @@ public class Fetcher extends Service {
 		long lastReply = 1;
 	
 		public void fetch() throws DownloadException {
-			final String username = prefs.getString("username", "");
-			final String password = prefs.getString("password", "");
-			if (username.length() == 0 || password.length() == 0) {
+			final CommonsHttpOAuthConsumer consumer =
+				TwitterAuth.getOAuthConsumer(Fetcher.this);
+			
+			if (consumer.getTokenSecret() == null) {
 				Log.d(LOG_TAG,
-					"Skipping fetch because we have no credentials.");
+					"Skipping fetch because we are not authenticated.");
+				
+				if (prefs.getString("password", "").length() != 0) {
+					showUnauthorizedNotification();
+				}
 				return;
 			}
 			
@@ -263,6 +281,8 @@ public class Fetcher extends Service {
 					}
 				}
 			}
+			
+			final String username = prefs.getString("username", "");
 			
 			abstract class PathHandler extends DefaultHandler {
 				private ArrayList<String> path =
@@ -514,28 +534,6 @@ public class Fetcher extends Service {
 			} catch (NameNotFoundException e) {
 				assert false;
 			}
-			final Credentials creds = new UsernamePasswordCredentials(
-				username, password);
-			client.getCredentialsProvider().setCredentials(
-				new AuthScope(API_HOST, API_PORT), creds);
-			// This preemptively authenticates every request, which halves the
-			// number of requests we need to do by avoiding the preliminary 401
-			// responses. It works crudely by shoving the credentials into every
-			// request so this client MUST NOT be used with any other hosts
-			// without making this code more sophisticated first.
-			client.addRequestInterceptor(new HttpRequestInterceptor() {
-				@Override
-				public void process(HttpRequest request, HttpContext context)
-					throws HttpException, IOException {
-					
-					AuthState authState = (AuthState) context.getAttribute(
-						ClientContext.TARGET_AUTH_STATE);
-					if (authState.getAuthScheme() == null) {
-						authState.setAuthScheme(new BasicScheme());
-						authState.setCredentials(creds);
-					}
-				}
-			}, 0);
 			
 			final boolean firstRun = (lastFriendStatus == 1);
 			final int filterType = prefs.getInt(
@@ -543,7 +541,7 @@ public class Fetcher extends Service {
 			
 			HttpEntity ent = null;
 			try {
-				ent = download(client, new URI(API_ROOT +
+				ent = download(client, consumer, new URI(API_ROOT +
 					"statuses/friends_timeline.xml" + "?" +
 					(firstRun ? "" : ("since_id=" + lastFriendStatus + "&")) +
 					"count=" + ((firstRun && filterType == FILTER_NONE) ?
@@ -580,7 +578,7 @@ public class Fetcher extends Service {
 				}
 				
 				if (prefs.getBoolean("messages", false)) {
-					ent = download(client, new URI(API_ROOT +
+					ent = download(client, consumer, new URI(API_ROOT +
 						"direct_messages.xml" + "?" +
 						"since_id=" + lastMessage));
 					if (ent != null) {
@@ -591,7 +589,7 @@ public class Fetcher extends Service {
 				}
 				
 				if (prefs.getBoolean("replies", false)) {
-					ent = download(client, new URI(API_ROOT +
+					ent = download(client, consumer, new URI(API_ROOT +
 						"statuses/replies.xml" + "?" +
 						"since_id=" + lastReply));
 					if (ent != null) {
@@ -628,7 +626,7 @@ public class Fetcher extends Service {
 				return;
 			}
 			
-			final String twitterRoot = "http://m.twitter.com/";
+			final String twitterRoot = "http://mobile.twitter.com/";
 			final DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
 			final NotificationManager nm =
 				(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -676,7 +674,7 @@ public class Fetcher extends Service {
 				final long id = t.getID();
 				final boolean message = t instanceof Message;
 				Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(
-					twitterRoot + (message ? "direct_messages" :
+					twitterRoot + (message ? "inbox" :
 					URLEncoder.encode(screenName) + "/status/" + id)));
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				n.contentIntent = PendingIntent.getActivity(

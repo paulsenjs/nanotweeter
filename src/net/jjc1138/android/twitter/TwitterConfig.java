@@ -4,6 +4,9 @@ import java.text.ChoiceFormat;
 import java.text.MessageFormat;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
@@ -40,8 +43,8 @@ public class TwitterConfig extends Activity {
 	private CheckBox sound;
 	private CheckBox vibrate;
 	private CheckBox lights;
-	private EditText username;
-	private EditText password;
+	private TextView username;
+	private Button sign_in;
 	private Spinner filter_type;
 	private EditText filter;
 
@@ -63,8 +66,8 @@ public class TwitterConfig extends Activity {
 		sound = (CheckBox) findViewById(R.id.sound);
 		vibrate = (CheckBox) findViewById(R.id.vibrate);
 		lights = (CheckBox) findViewById(R.id.lights);
-		username = (EditText) findViewById(R.id.username);
-		password = (EditText) findViewById(R.id.password);
+		username = (TextView) findViewById(R.id.username);
+		sign_in = (Button) findViewById(R.id.sign_in);
 		filter_type = (Spinner) findViewById(R.id.filter_type);
 		filter = (EditText) findViewById(R.id.filter);
 		
@@ -131,8 +134,6 @@ public class TwitterConfig extends Activity {
 		sound.setOnCheckedChangeListener(checkWatcher);
 		vibrate.setOnCheckedChangeListener(checkWatcher);
 		lights.setOnCheckedChangeListener(checkWatcher);
-		username.addTextChangedListener(textWatcher);
-		password.addTextChangedListener(textWatcher);
 		filter_type.setOnItemSelectedListener(selectionWatcher);
 		filter.addTextChangedListener(textWatcher);
 		
@@ -165,16 +166,19 @@ public class TwitterConfig extends Activity {
 			}
 		});
 		
+		sign_in.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startActivity(new Intent(
+					TwitterConfig.this, TwitterAuth.class));
+			}
+		});
+		
 		// Saving and reverting:
 		((Button) findViewById(R.id.save)).setOnClickListener(
 			new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					if (!prefs.getString("username", "").equals(
-						username.getText().toString())) {
-						
-						deleteFile(Fetcher.LAST_TWEET_ID_FILENAME);
-					}
 					uiToPrefs(prefs);
 					settingsChanged();
 					
@@ -216,6 +220,27 @@ public class TwitterConfig extends Activity {
 			sendBroadcast(
 				new Intent(TwitterConfig.this, AlarmReceiver.class));
 		}
+		
+		if (prefs.getString("password", "").length() > 0) {
+			showDialog(0);
+		}
+	}
+
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		return new AlertDialog.Builder(this)
+			.setMessage(R.string.upgraders_need_to_sign_in_again)
+			.setPositiveButton(R.string.ok,
+				new DialogInterface.OnClickListener() {
+			
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					startActivity(new Intent(
+						TwitterConfig.this, TwitterAuth.class));
+				}
+			})
+			.setNegativeButton(R.string.sign_in_again_later, null)
+			.create();
 	}
 
 	@Override
@@ -263,8 +288,6 @@ public class TwitterConfig extends Activity {
 		e.putBoolean("sound", sound.isChecked());
 		e.putBoolean("vibrate", vibrate.isChecked());
 		e.putBoolean("lights", lights.isChecked());
-		e.putString("username", username.getText().toString());
-		e.putString("password", password.getText().toString());
 		e.putInt("filter_type", filter_type.getSelectedItemPosition());
 		e.putString("filter", filter.getText().toString());
 		e.commit();
@@ -283,13 +306,24 @@ public class TwitterConfig extends Activity {
 		enable.setChecked(p.getBoolean("enable", true));
 		interval.setSelection(getIntervalIndexOf(
 			p.getInt("interval", INTERVALS[DEFAULT_INTERVAL_INDEX])));
+		
+		String usernameString = p.getString("username", null);
+		if (usernameString != null &&
+			p.getString("oauth_token_secret", null) != null) {
+			
+			sign_in.setText(R.string.change_account);
+			username.setText(getString(R.string.signed_in_as, usernameString));
+			username.setVisibility(View.VISIBLE);
+		} else {
+			sign_in.setText(R.string.sign_in);
+			username.setVisibility(View.GONE);
+		}
+		
 		messages.setChecked(p.getBoolean("messages", true));
 		replies.setChecked(p.getBoolean("replies", true));
 		sound.setChecked(p.getBoolean("sound", false));
 		vibrate.setChecked(p.getBoolean("vibrate", false));
 		lights.setChecked(p.getBoolean("lights", false));
-		username.setText(p.getString("username", ""));
-		password.setText(p.getString("password", ""));
 		filter_type.setSelection(p.getInt("filter_type", Fetcher.FILTER_NONE));
 		filter.setText(p.getString("filter", ""));
 	}
@@ -304,8 +338,6 @@ public class TwitterConfig extends Activity {
 			sound.isChecked() == p.getBoolean("sound", false) &&
 			vibrate.isChecked() == p.getBoolean("vibrate", false) &&
 			lights.isChecked() == p.getBoolean("lights", false) &&
-			username.getText().toString().equals(p.getString("username", "")) &&
-			password.getText().toString().equals(p.getString("password", "")) &&
 			filter_type.getSelectedItemPosition() ==
 				p.getInt("filter_type", Fetcher.FILTER_NONE) &&
 			filter.getText().toString().equals(p.getString("filter", ""));
