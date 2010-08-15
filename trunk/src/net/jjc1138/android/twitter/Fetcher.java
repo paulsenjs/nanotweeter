@@ -556,7 +556,8 @@ public class Fetcher extends Service {
 							
 							final String screenName = i.next().getScreenName();
 							final boolean filtered = Arrays.binarySearch(
-								filterNames, screenName) >= 0;
+								filterNames, screenName,
+								String.CASE_INSENSITIVE_ORDER) >= 0;
 							if (filterType == FILTER_WHITELIST) {
 								if (!filtered) {
 									i.remove();
