@@ -192,16 +192,10 @@ public class Fetcher extends Service {
 			} catch (IOException e) {
 				throw new DownloadException();
 			} catch (OAuthMessageSignerException e) {
-				// FIXME OAuth exception
-				e.printStackTrace();
-				throw new DownloadException();
+				throw new RuntimeException(e);
 			} catch (OAuthExpectationFailedException e) {
-				// FIXME OAuth exception
-				e.printStackTrace();
-				throw new DownloadException();
+				throw new RuntimeException(e);
 			} catch (OAuthCommunicationException e) {
-				// FIXME OAuth exception
-				e.printStackTrace();
 				throw new DownloadException();
 			}
 			

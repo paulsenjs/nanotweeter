@@ -95,17 +95,20 @@ public class TwitterAuth extends Activity {
 									Uri.parse(url)
 										.getQueryParameter("oauth_verifier"));
 							} catch (OAuthMessageSignerException e) {
-								// FIXME Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							} catch (OAuthNotAuthorizedException e) {
-								// FIXME Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							} catch (OAuthExpectationFailedException e) {
-								// FIXME Auto-generated catch block
-								e.printStackTrace();
+								throw new RuntimeException(e);
 							} catch (OAuthCommunicationException e) {
-								// FIXME Auto-generated catch block
-								e.printStackTrace();
+								finish(new Finisher<TwitterAuth>() {
+									@Override
+									public void finish(TwitterAuth activity) {
+										activity.showDialog(
+											DIALOG_NETWORK_ERROR);
+									}
+								});
+								return;
 							}
 							
 							SharedPreferences prefs = getSharedPreferences(
@@ -160,7 +163,7 @@ public class TwitterAuth extends Activity {
 							
 								@Override
 								public void onCancel(DialogInterface dialog) {
-									activity.showDialog(0);
+									activity.showDialog(DIALOG_INCOMPLETE);
 								}
 							});
 							return pd;
@@ -195,18 +198,20 @@ public class TwitterAuth extends Activity {
 				try {
 					authorizationURL =
 						provider.retrieveRequestToken(consumer, callback);
-				} catch (OAuthMessageSignerException e1) {
-					// FIXME Auto-generated catch block
-					e1.printStackTrace();
-				} catch (OAuthNotAuthorizedException e1) {
-					// FIXME Auto-generated catch block
-					e1.printStackTrace();
-				} catch (OAuthExpectationFailedException e1) {
-					// FIXME Auto-generated catch block
-					e1.printStackTrace();
-				} catch (OAuthCommunicationException e1) {
-					// FIXME Auto-generated catch block
-					e1.printStackTrace();
+				} catch (OAuthMessageSignerException e) {
+					throw new RuntimeException(e);
+				} catch (OAuthNotAuthorizedException e) {
+					throw new RuntimeException(e);
+				} catch (OAuthExpectationFailedException e) {
+					throw new RuntimeException(e);
+				} catch (OAuthCommunicationException e) {
+					finish(new Finisher<TwitterAuth>() {
+						@Override
+						public void finish(TwitterAuth activity) {
+							activity.showDialog(
+								DIALOG_NETWORK_ERROR);
+						}
+					});
 				}
 				
 				assert authorizationURL != null;
@@ -234,7 +239,7 @@ public class TwitterAuth extends Activity {
 				pd.setOnCancelListener(new DialogInterface.OnCancelListener() {
 					@Override
 					public void onCancel(DialogInterface dialog) {
-						activity.showDialog(0);
+						activity.showDialog(DIALOG_INCOMPLETE);
 					}
 				});
 				return pd;
@@ -257,28 +262,54 @@ public class TwitterAuth extends Activity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			showDialog(0);
+			showDialog(DIALOG_INCOMPLETE);
 			return true;
 		} else {
 			return super.onKeyDown(keyCode, event);
 		}
 	}
 
+	private static final int DIALOG_INCOMPLETE = 0;
+	private static final int DIALOG_NETWORK_ERROR = 1;
+
 	@Override
 	protected Dialog onCreateDialog(int id) {
-		return new AlertDialog.Builder(this)
-			.setMessage(R.string.auth_not_completed)
-			.setPositiveButton(R.string.cancel_auth,
-				new DialogInterface.OnClickListener() {
-			
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					finish();
-				}
-			})
-			.setNegativeButton(R.string.dont_cancel_auth, null)
-			.setCancelable(false)
-			.create();
+		if (id == DIALOG_INCOMPLETE) {
+			return new AlertDialog.Builder(this)
+				.setMessage(R.string.auth_not_completed)
+				.setPositiveButton(R.string.cancel_auth,
+					new DialogInterface.OnClickListener() {
+				
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						finish();
+					}
+				})
+				.setNegativeButton(R.string.dont_cancel_auth, null)
+				.setCancelable(false)
+				.create();
+		} else if (id == DIALOG_NETWORK_ERROR) {
+			return new AlertDialog.Builder(this)
+				.setMessage(R.string.auth_network_error)
+				.setPositiveButton(R.string.ok,
+					new DialogInterface.OnClickListener() {
+				
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
+						finish();
+					}
+				})
+				.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface arg0) {
+						finish();
+					}
+				})
+				.create();
+		} else {
+			assert false;
+			return null;
+		}
 	}
 
 	@Override
