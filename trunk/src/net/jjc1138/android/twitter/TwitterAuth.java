@@ -85,6 +85,7 @@ public class TwitterAuth extends Activity {
 				if (url.startsWith(callback)) {
 					browser.setVisibility(View.INVISIBLE);
 					browser.stopLoading();
+					browser.loadUrl("about:blank");
 					
 					task = new ActivityTask<TwitterAuth>(TwitterAuth.this) {
 					
