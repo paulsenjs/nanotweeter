@@ -104,14 +104,37 @@ public class Fetcher extends Service {
 			return;
 		}
 		
-		((AlarmManager) getSystemService(ALARM_SERVICE)).set(
-			AlarmManager.ELAPSED_REALTIME_WAKEUP,
-			SystemClock.elapsedRealtime() +
-				(prefs.getInt("interval",
-					TwitterConfig.INTERVALS[
-						TwitterConfig.DEFAULT_INTERVAL_INDEX]) * 60 * 1000),
-			PendingIntent.getBroadcast(this, 0,
-				new Intent(this, AlarmReceiver.class), 0));
+		final AlarmManager am =
+			((AlarmManager) getSystemService(ALARM_SERVICE));
+		final PendingIntent operation = PendingIntent.getBroadcast(this, 0,
+			new Intent(this, AlarmReceiver.class), 0);
+		final int interval = prefs.getInt("interval",
+			TwitterConfig.INTERVALS[TwitterConfig.DEFAULT_INTERVAL_INDEX]);
+		if (interval == 15 || interval == 30 || interval == 60) {
+			final long inexactInterval;
+			if (interval == 15) {
+				inexactInterval = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+			} else if (interval == 30) {
+				inexactInterval = AlarmManager.INTERVAL_HALF_HOUR;
+			} else if (interval == 60) {
+				inexactInterval = AlarmManager.INTERVAL_HOUR;
+			} else {
+				assert false;
+				inexactInterval = AlarmManager.INTERVAL_HOUR;
+			}
+			am.setInexactRepeating(
+				AlarmManager.ELAPSED_REALTIME_WAKEUP,
+				SystemClock.elapsedRealtime() +
+					60 * 1000,
+				inexactInterval,
+				operation);
+		} else {
+			am.set(
+				AlarmManager.ELAPSED_REALTIME_WAKEUP,
+				SystemClock.elapsedRealtime() +
+					interval * 60 * 1000,
+				operation);
+		}
 		Log.d(LOG_TAG, "Scheduled next run.");
 		
 		if (fetcherThread != null && fetcherThread.inProgress()) {
