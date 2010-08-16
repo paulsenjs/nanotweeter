@@ -82,60 +82,6 @@
          offset="1"
          id="stop4676" />
     </linearGradient>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient4984"
-       id="linearGradient5047"
-       gradientUnits="userSpaceOnUse"
-       x1="647.57812"
-       y1="695.20734"
-       x2="1157.7344"
-       y2="695.20734" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient4984"
-       id="linearGradient5931"
-       gradientUnits="userSpaceOnUse"
-       x1="647.57812"
-       y1="695.20734"
-       x2="1157.7344"
-       y2="695.20734" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient4984"
-       id="linearGradient6557"
-       gradientUnits="userSpaceOnUse"
-       x1="647.57812"
-       y1="695.20734"
-       x2="1157.7344"
-       y2="695.20734" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient6187"
-       id="linearGradient6559"
-       gradientUnits="userSpaceOnUse"
-       x1="258.91125"
-       y1="1081.4126"
-       x2="2017.3344"
-       y2="1081.4126" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient4984"
-       id="linearGradient6567"
-       gradientUnits="userSpaceOnUse"
-       x1="647.57812"
-       y1="695.20734"
-       x2="1157.7344"
-       y2="695.20734" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient6187"
-       id="linearGradient6569"
-       gradientUnits="userSpaceOnUse"
-       x1="258.91125"
-       y1="1081.4126"
-       x2="2017.3344"
-       y2="1081.4126" />
     <filter
        inkscape:collect="always"
        id="filter6577">
@@ -156,24 +102,6 @@
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient6187"
-       id="linearGradient8315"
-       gradientUnits="userSpaceOnUse"
-       x1="493.91125"
-       y1="1081.4126"
-       x2="1452.3344"
-       y2="1081.4126" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient6187"
-       id="linearGradient8317"
-       gradientUnits="userSpaceOnUse"
-       x1="493.91125"
-       y1="1081.4126"
-       x2="1452.3344"
-       y2="1081.4126" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient6187"
        id="linearGradient8319"
        gradientUnits="userSpaceOnUse"
        x1="493.91125"
@@ -184,24 +112,6 @@
        inkscape:collect="always"
        xlink:href="#linearGradient6187"
        id="linearGradient8321"
-       gradientUnits="userSpaceOnUse"
-       x1="493.91125"
-       y1="1081.4126"
-       x2="1452.3344"
-       y2="1081.4126" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient6187"
-       id="linearGradient8323"
-       gradientUnits="userSpaceOnUse"
-       x1="493.91125"
-       y1="1081.4126"
-       x2="1452.3344"
-       y2="1081.4126" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient6187"
-       id="linearGradient8325"
        gradientUnits="userSpaceOnUse"
        x1="493.91125"
        y1="1081.4126"
@@ -265,7 +175,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -277,71 +187,5 @@
        style="fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient3642);stroke-width:113.83369446000000000;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        d="M 1191.0356,242.48724 C 573.31593,242.48724 71.984569,617.7799 71.984548,1080.2117 C 71.984548,1382.3278 285.97653,1647.2548 606.5991,1794.6353 C 548.09452,1893.6085 442.82668,2012.5074 263.72215,2151.933 C 613.63532,2060.9162 849.41775,1979.0087 1000.6511,1905.8463 C 1062.5368,1913.7981 1126.1338,1917.9704 1191.0356,1917.9704 C 1808.755,1917.9704 2310.0865,1542.6434 2310.0865,1080.2117 C 2310.0865,617.7799 1808.755,242.48724 1191.0356,242.48724 z"
        id="path3177" />
-    <g
-       id="g6537"
-       transform="matrix(0.9895691,0,0,0.9895691,91.076028,84.651183)"
-       style="opacity:0.54100001;fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1;filter:url(#filter6577)">
-      <flowRoot
-         transform="matrix(4.2722405,0,0,4.2722405,-2295.4395,-1888.6804)"
-         style="font-size:400px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"
-         id="flowRoot6539"
-         xml:space="preserve"><flowRegion
-           style="fill:url(#linearGradient6557);fill-opacity:1;stroke:url(#linearGradient6559)"
-           id="flowRegion6541"><rect
-             style="font-size:400px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"
-             y="588"
-             x="576"
-             height="303.31171"
-             width="613.47406"
-             id="rect6543" /></flowRegion><flowPara
-           style="font-size:400px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"
-           id="flowPara6545">T</flowPara></flowRoot>      <flowRoot
-         transform="matrix(4.2722405,0,0,4.2722405,-3015.0464,-1888.6804)"
-         style="font-size:400px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Italic"
-         id="flowRoot6547"
-         xml:space="preserve"><flowRegion
-           style="fill:url(#linearGradient6567);fill-opacity:1;stroke:url(#linearGradient6569)"
-           id="flowRegion6549"><rect
-             style="font-size:400px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Italic"
-             y="588"
-             x="576"
-             height="303.31171"
-             width="613.47406"
-             id="rect6551" /></flowRegion><flowPara
-           style="font-size:400px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Italic"
-           id="flowPara6553">n</flowPara></flowRoot>    </g>
-    <g
-       id="g6511"
-       transform="matrix(0.9895691,0,0,0.9895691,39.739934,1.9356647)"
-       style="stroke:url(#linearGradient6587);stroke-opacity:1">
-      <flowRoot
-         transform="matrix(4.2722405,0,0,4.2722405,-2295.4395,-1888.6804)"
-         style="font-size:400px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient8321);stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"
-         id="flowRoot4704"
-         xml:space="preserve"><flowRegion
-           style="fill:url(#linearGradient5047);fill-opacity:1;stroke:url(#linearGradient8317)"
-           id="flowRegion4706"><rect
-             style="font-size:400px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient8315);stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"
-             y="588"
-             x="576"
-             height="303.31171"
-             width="613.47406"
-             id="rect4708" /></flowRegion><flowPara
-           style="font-size:400px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient8319);stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"
-           id="flowPara4712">T</flowPara></flowRoot>      <flowRoot
-         transform="matrix(4.2722405,0,0,4.2722405,-3015.0464,-1888.6804)"
-         style="font-size:400px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient8329);stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Italic"
-         id="flowRoot5923"
-         xml:space="preserve"><flowRegion
-           style="fill:url(#linearGradient5931);fill-opacity:1;stroke:url(#linearGradient8325)"
-           id="flowRegion5925"><rect
-             style="font-size:400px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient8323);stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Italic"
-             y="588"
-             x="576"
-             height="303.31171"
-             width="613.47406"
-             id="rect5927" /></flowRegion><flowPara
-           style="font-size:400px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:url(#linearGradient8327);stroke-width:7.02207661;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Italic"
-           id="flowPara5929">n</flowPara></flowRoot>    </g>
   </g>
 </svg>

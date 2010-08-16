@@ -34,6 +34,6 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	style="@style/notificationText"
-	android:textSize="13sp"
+	android:textSize="@dimen/notification_longtext_text_size"
 	/>
 </LinearLayout>
