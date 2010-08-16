@@ -90,6 +90,7 @@ public class TwitterConfig extends Activity {
 			android.R.layout.simple_spinner_dropdown_item);
 		interval.setAdapter(a);
 		interval.setSelection(DEFAULT_INTERVAL_INDEX);
+		filter_type.setSelection(Fetcher.FILTER_ALL, false);
 		
 		prefs = getSharedPreferences(PREFS, 0);
 		unsaved = getSharedPreferences("unsaved", 0);
