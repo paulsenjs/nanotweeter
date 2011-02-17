@@ -4,10 +4,10 @@
 	<item name="android:layout_marginLeft">2sp</item>
 	<item name="android:src">@drawable/notification_icon_view</item>
 </style>
-<style name="notificationTime">
+<style name="notificationTime" parent="notificationTitle">
 	<item name="android:layout_marginLeft">3sp</item>
-	<item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
 	<item name="android:textSize">12sp</item>
+	<item name="android:textStyle">normal</item>
 </style>
 <style name="notificationUsername" parent="notificationTime">
 	<item name="android:layout_marginLeft">4sp</item>
@@ -18,8 +18,7 @@
 	<item name="android:text">@string/notification_is_message</item>
 	<item name="android:visibility">gone</item>
 </style>
-<style name="notificationText">
-	<item name="android:textColor">?android:attr/textColorSecondaryInverse</item>
+<style name="notificationText" parent="notificationBody">
 </style>
 <style name="webLink">
 	<item name="android:focusable">true</item>
