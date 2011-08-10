@@ -40,5 +40,5 @@
 <string name="auth_network_error">Could not contact Twitter. Please try again.</string>
 <string name="credits">Credits/licenses</string>
 <string name="credits_text">nanoTweeter is by Jon Colverson, includes contributions from Kevin Marks, and is released under the MIT license &lt;http://opensource.org/licenses/mit-license.php&gt;\n\nIt uses the following libraries:\n\nApache Commons Lang (under Apache License 2.0 &lt;http://www.apache.org/licenses/LICENSE-2.0&gt;)\n\nSignpost (under Apache License 2.0 &lt;http://www.apache.org/licenses/LICENSE-2.0&gt;)</string>
-<string name="forbidden"><!-- This has to be short to fit in the notification. -->Please re-authorize for access to DMs.</string>
+<string name="forbidden"><!-- This has to be short to fit in the notification. -->Please sign in again for access to DMs.</string>
 </resources>

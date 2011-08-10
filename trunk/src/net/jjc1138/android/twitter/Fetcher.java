@@ -205,7 +205,7 @@ public class Fetcher extends Service {
 			Notification n = new Notification();
 			n.icon = R.drawable.notification_icon_status_bar;
 			Intent i = new Intent(
-				Fetcher.this, TwitterConfig.class);
+				Fetcher.this, TwitterAuth.class);
 			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			n.setLatestEventInfo(Fetcher.this,
 				getString(R.string.app_name),
