@@ -72,6 +72,7 @@ public class Fetcher extends Service {
 	final static String LAST_TWEET_ID_FILENAME = "lasttweets";
 	final static long[] VIBRATION_PATTERN = new long[] { 0, 100, 60, 100 };
 	final static int ERROR_NOTIFICATION_ID = 0;
+	final static int DM_REAUTH_NOTIFICATION_ID = 1;
 	private final static String TWEET_SOUND_FILENAME = "tweet.ogg";
 
 	private SharedPreferences prefs;
@@ -186,7 +187,21 @@ public class Fetcher extends Service {
 			private static final long serialVersionUID = 1L;
 		}
 	
-		private void showUnauthorizedNotification() {
+		private class HttpErrorException extends DownloadException {
+			private static final long serialVersionUID = 1L;
+		
+			private int status;
+		
+			public HttpErrorException(final int status) {
+				this.status = status;
+			}
+		
+			public int getStatus() {
+				return status;
+			}
+		}
+	
+		private void showUnauthorizedNotification(final boolean forbidden) {
 			Notification n = new Notification();
 			n.icon = R.drawable.notification_icon_status_bar;
 			Intent i = new Intent(
@@ -194,11 +209,13 @@ public class Fetcher extends Service {
 			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			n.setLatestEventInfo(Fetcher.this,
 				getString(R.string.app_name),
-				getString(R.string.unauthorized),
+				getString(forbidden ?
+					R.string.forbidden : R.string.unauthorized),
 				PendingIntent.getActivity(Fetcher.this, 0, i, 0));
 			n.flags |= Notification.FLAG_AUTO_CANCEL;
 			((NotificationManager) getSystemService(NOTIFICATION_SERVICE))
-				.notify(ERROR_NOTIFICATION_ID, n);
+				.notify(forbidden ?
+					DM_REAUTH_NOTIFICATION_ID : ERROR_NOTIFICATION_ID, n);
 		}
 	
 		private HttpEntity download(
@@ -227,10 +244,10 @@ public class Fetcher extends Service {
 			HttpEntity ent = r.getEntity();
 			
 			if (status == HttpStatus.SC_UNAUTHORIZED) {
-				showUnauthorizedNotification();
+				showUnauthorizedNotification(false);
 				
 				finish(ent);
-				throw new DownloadException();
+				throw new HttpErrorException(status);
 			} else {
 				((NotificationManager) getSystemService(NOTIFICATION_SERVICE))
 					.cancel(ERROR_NOTIFICATION_ID);
@@ -246,9 +263,10 @@ public class Fetcher extends Service {
 			} else {
 				// All other response codes are essentially transient errors.
 				// "403 Forbidden" and "404 Not Found" are exceptions, but there
-				// isn't anything reasonable we can do to recover from them.
+				// isn't anything reasonable we can do here to recover from
+				// them.
 				finish(ent);
-				throw new DownloadException();
+				throw new HttpErrorException(status);
 			}
 		}
 	
@@ -274,7 +292,7 @@ public class Fetcher extends Service {
 					"Skipping fetch because we are not authenticated.");
 				
 				if (prefs.getString("password", "").length() != 0) {
-					showUnauthorizedNotification();
+					showUnauthorizedNotification(false);
 				}
 				return;
 			}
@@ -602,10 +620,27 @@ public class Fetcher extends Service {
 				}
 				
 				if (prefs.getBoolean("messages", false)) {
-					ent = download(client, consumer, new URI(API_ROOT +
-						"direct_messages.xml" + "?" +
-						"since_id=" + lastMessage));
+					try {
+						ent = download(client, consumer, new URI(API_ROOT +
+							"direct_messages.xml" + "?" +
+							"since_id=" + lastMessage));
+					} catch (final HttpErrorException e) {
+						if (e.getStatus() == HttpStatus.SC_FORBIDDEN) {
+							// This likely means that we have an old
+							// authentication token that doesn't allow DM
+							// access. Show a notification suggestion a
+							// reauthentication but allow the rest of the
+							// fetching process to continue.
+							showUnauthorizedNotification(true);
+							ent = null;
+						} else {
+							throw e;
+						}
+					}
 					if (ent != null) {
+						((NotificationManager) getSystemService(
+							NOTIFICATION_SERVICE))
+								.cancel(DM_REAUTH_NOTIFICATION_ID);
 						reader.setContentHandler(new MessageHandler());
 						is.setByteStream(ent.getContent());
 						reader.parse(is);
