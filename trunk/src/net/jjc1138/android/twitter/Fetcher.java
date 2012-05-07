@@ -1,6 +1,6 @@
 package net.jjc1138.android.twitter;
 
-import static org.apache.commons.lang.StringEscapeUtils.unescapeHtml;
+import static org.apache.commons.lang3.StringEscapeUtils.unescapeHtml4;
 
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
@@ -468,7 +468,7 @@ public class Fetcher extends Service {
 					} else if (pathEquals(createdAtPath)) {
 						try {
 							createdAt = twitterDateFormat.parse(
-								unescapeHtml(getCurrentText()));
+								unescapeHtml4(getCurrentText()));
 						} catch (ParseException e) {
 							createdAt = new Date(System.currentTimeMillis());
 						}
@@ -479,9 +479,9 @@ public class Fetcher extends Service {
 						}
 						updateLast(id);
 					} else if (pathEquals(textPath)) {
-						text = newLinesToSpaces(unescapeHtml(getCurrentText()));
+						text = newLinesToSpaces(unescapeHtml4(getCurrentText()));
 					} else if (pathEquals(screenNamePath)) {
-						screenName = unescapeHtml(getCurrentText());
+						screenName = unescapeHtml4(getCurrentText());
 					}
 				}
 			}
@@ -527,7 +527,7 @@ public class Fetcher extends Service {
 					} else if (pathEquals(createdAtPath)) {
 						try {
 							createdAt = twitterDateFormat.parse(
-								unescapeHtml(getCurrentText()));
+								unescapeHtml4(getCurrentText()));
 						} catch (ParseException e) {
 							createdAt = new Date(System.currentTimeMillis());
 						}
@@ -538,9 +538,9 @@ public class Fetcher extends Service {
 						}
 						lastMessage = Math.max(lastMessage, id);
 					} else if (pathEquals(textPath)) {
-						text = newLinesToSpaces(unescapeHtml(getCurrentText()));
+						text = newLinesToSpaces(unescapeHtml4(getCurrentText()));
 					} else if (pathEquals(screenNamePath)) {
-						screenName = unescapeHtml(getCurrentText());
+						screenName = unescapeHtml4(getCurrentText());
 					}
 				}
 			}
