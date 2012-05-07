@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="app_name">nanoTweeter</string>
-<string name="configuration_title"><b>nanoTweeter</b> Settings</string>
+<string name="configuration_title">Settings</string>
 <string name="enable">Start automatically in the background and check for updates/messages every:</string>
 <string name="interval">Check for updates every:</string>
 <string name="interval_option">1#1 minute| 1&lt;{0} minutes</string>
