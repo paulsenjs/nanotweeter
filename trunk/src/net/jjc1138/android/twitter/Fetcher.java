@@ -151,10 +151,10 @@ public class Fetcher extends Service {
 	private class FetcherThread extends Thread {
 		private final Charset FILE_CHARSET = Charset.forName("US-ASCII");
 	
-		private static final String API_HOST = "twitter.com";
+		private static final String API_HOST = "api.twitter.com";
 		private static final int API_PORT = 443;
 		private static final String API_ROOT =
-			"https://" + API_HOST + ":" + API_PORT + "/";
+			"https://" + API_HOST + ":" + API_PORT + "/1/";
 	
 		private static final int FIRST_RUN_NOTIFICATIONS = 3;
 		// This should be 200, but firing so many notifications causes a memory
@@ -579,7 +579,8 @@ public class Fetcher extends Service {
 			try {
 				if (filterType != FILTER_ALL) {
 					ent = download(client, consumer, new URI(API_ROOT +
-						"statuses/friends_timeline.xml" + "?" +
+						"statuses/home_timeline.xml" + "?" +
+						"include_rts=true&include_entities=true&" +
 						(firstRun ? "" :
 							("since_id=" + lastFriendStatus + "&")) +
 						"count=" + ((firstRun && filterType == FILTER_NONE) ?
@@ -623,12 +624,13 @@ public class Fetcher extends Service {
 					try {
 						ent = download(client, consumer, new URI(API_ROOT +
 							"direct_messages.xml" + "?" +
+							"include_entities=true&" +
 							"since_id=" + lastMessage));
 					} catch (final HttpErrorException e) {
 						if (e.getStatus() == HttpStatus.SC_FORBIDDEN) {
 							// This likely means that we have an old
 							// authentication token that doesn't allow DM
-							// access. Show a notification suggestion a
+							// access. Show a notification suggesting a
 							// reauthentication but allow the rest of the
 							// fetching process to continue.
 							showUnauthorizedNotification(true);
@@ -649,7 +651,8 @@ public class Fetcher extends Service {
 				
 				if (prefs.getBoolean("replies", false)) {
 					ent = download(client, consumer, new URI(API_ROOT +
-						"statuses/replies.xml" + "?" +
+						"statuses/mentions.xml" + "?" +
+						"include_rts=true&include_entities=true&" +
 						"since_id=" + lastReply));
 					if (ent != null) {
 						reader.setContentHandler(new ReplyHandler());
